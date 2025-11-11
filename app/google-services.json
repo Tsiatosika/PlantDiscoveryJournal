@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "55299181418",
+    "project_id": "plantdiscoveryjournal",
+    "storage_bucket": "plantdiscoveryjournal.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:55299181418:android:4e83c1c845525b8b0e3313",
+        "android_client_info": {
+          "package_name": "com.example.plantdiscoveryjournal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "55299181418-hp3pqprdevs332bohhcv5ibg6hqt3qv5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.plantdiscoveryjournal",
+            "certificate_hash": "cbe26145c5d19768b193768909e283a141d0d258"
+          }
+        },
+        {
+          "client_id": "55299181418-ou3b82obkk69424qeeaae6u07qeptp25.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.plantdiscoveryjournal",
+            "certificate_hash": "bb0dac74d321e14367719b6291afa1666e445d75"
+          }
+        },
+        {
+          "client_id": "55299181418-cqdh8vp2i91967ralh2h2angl26i0h3p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvCw_Qox_knWepiOuy1Iu2WkPrxMyzvLU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "55299181418-cqdh8vp2i91967ralh2h2angl26i0h3p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
