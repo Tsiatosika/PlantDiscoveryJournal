@@ -11,12 +11,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.plantdiscoveryjournal.domain.model.Discovery
+import com.example.plantdiscoveryjournal.ui.theme.*
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,7 +35,7 @@ fun DetailScreen(
     // Gérer l'état de suppression
     LaunchedEffect(uiState) {
         if (uiState is DetailUiState.Deleted) {
-            Toast.makeText(context, "Découverte supprimée", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Discovery deleted", Toast.LENGTH_SHORT).show()
             onNavigateBack()
         }
     }
@@ -40,30 +43,43 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Détails de la Découverte") },
+                title = {
+                    Text(
+                        "Discovery Details",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Retour")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TextBlack)
                     }
                 },
                 actions = {
                     if (uiState is DetailUiState.Success) {
+                        IconButton(onClick = { /* Share */ }) {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = "Share",
+                                tint = TextBlack
+                            )
+                        }
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "Supprimer",
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                contentDescription = "Delete",
+                                tint = TextBlack
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = BackgroundWhite,
+                    titleContentColor = TextBlack
                 )
             )
-        }
+        },
+        containerColor = BackgroundWhite
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -73,12 +89,14 @@ fun DetailScreen(
             when (val state = uiState) {
                 is DetailUiState.Loading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
+                        color = PrimaryGreen
                     )
                 }
                 is DetailUiState.Success -> {
                     DiscoveryDetailContent(
                         discovery = state.discovery,
+                        onDeleteClick = { showDeleteDialog = true },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -93,13 +111,13 @@ fun DetailScreen(
                             Icons.Default.Error,
                             contentDescription = null,
                             modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.error
+                            tint = ErrorRed
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
                             text = state.message,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.error
+                            fontSize = 16.sp,
+                            color = ErrorRed
                         )
                     }
                 }
@@ -115,13 +133,21 @@ fun DetailScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             icon = {
-                Icon(Icons.Default.Delete, contentDescription = null)
+                Icon(Icons.Default.Delete, contentDescription = null, tint = ErrorRed)
             },
             title = {
-                Text("Supprimer cette découverte ?")
+                Text(
+                    "Delete this discovery?",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
             },
             text = {
-                Text("Cette action est irréversible. La découverte sera définitivement supprimée.")
+                Text(
+                    "This action is irreversible. The discovery will be permanently deleted.",
+                    color = TextGray,
+                    fontSize = 14.sp
+                )
             },
             confirmButton = {
                 Button(
@@ -130,17 +156,24 @@ fun DetailScreen(
                         showDeleteDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
+                        containerColor = ErrorRed
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("Supprimer")
+                    Text("Delete", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Annuler")
+                TextButton(
+                    onClick = { showDeleteDialog = false },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = TextBlack
+                    )
+                ) {
+                    Text("Cancel")
                 }
-            }
+            },
+            shape = RoundedCornerShape(16.dp)
         )
     }
 }
@@ -148,118 +181,77 @@ fun DetailScreen(
 @Composable
 fun DiscoveryDetailContent(
     discovery: Discovery,
+    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier = modifier.verticalScroll(rememberScrollState())
     ) {
-        // Image en grande taille
-        Card(
+        // Image principale avec coins arrondis
+        AsyncImage(
+            model = File(discovery.imageLocalPath),
+            contentDescription = discovery.name,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(300.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            AsyncImage(
-                model = File(discovery.imageLocalPath),
-                contentDescription = discovery.name,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-        }
+                .padding(16.dp)
+                .height(220.dp)
+                .clip(RoundedCornerShape(16.dp)),
+            contentScale = ContentScale.Crop
+        )
 
-        // Nom de la plante/insecte
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Row(
+            // Nom de la plante
+            Text(
+                text = discovery.name,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextBlack
+            )
+
+            // Date de découverte
+            Text(
+                text = "Discovered: ${discovery.getFormattedDate()}",
+                fontSize = 13.sp,
+                color = TextGray
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Section "Did You Know"
+            Text(
+                text = discovery.aiFact,
+                fontSize = 14.sp,
+                color = TextDarkGray,
+                lineHeight = 22.sp
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Bouton Delete Entry
+            Button(
+                onClick = onDeleteClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .height(54.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = ErrorRed
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(
-                    Icons.Default.Spa,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
                 Text(
-                    text = discovery.name,
-                    style = MaterialTheme.typography.headlineSmall,
+                    "Delete Entry",
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = BackgroundWhite
                 )
             }
-        }
 
-        // Fait amusant
-        Card(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Default.Lightbulb,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "Le Saviez-Vous ?",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                Text(
-                    text = discovery.aiFact,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-
-        // Métadonnées
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.CalendarToday,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "Découvert le ${discovery.getFormattedDate()}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

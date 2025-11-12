@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,8 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import com.example.plantdiscoveryjournal.ui.theme.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.isGranted
@@ -59,7 +63,7 @@ fun CaptureScreen(
                 }
                 capturedBitmap = bitmap
             } catch (e: Exception) {
-                Toast.makeText(context, "Erreur de chargement: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Loading error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -78,7 +82,7 @@ fun CaptureScreen(
                 }
                 capturedBitmap = bitmap
             } catch (e: Exception) {
-                Toast.makeText(context, "Erreur de chargement: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Loading error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -105,19 +109,25 @@ fun CaptureScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nouvelle Découverte") },
+                title = {
+                    Text(
+                        "New Discovery",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Retour")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TextBlack)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = BackgroundWhite,
+                    titleContentColor = TextBlack
                 )
             )
-        }
+        },
+        containerColor = BackgroundWhite
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -135,13 +145,14 @@ fun CaptureScreen(
                     ) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(64.dp),
-                            color = MaterialTheme.colorScheme.primary
+                            color = PrimaryGreen
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                         Text(
                             text = state.message,
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
+                            fontSize = 16.sp,
+                            color = TextBlack,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -149,103 +160,134 @@ fun CaptureScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                            .padding(horizontal = 24.dp, vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Aperçu de l'image capturée
-                        if (capturedBitmap != null) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                                shape = RoundedCornerShape(16.dp)
-                            ) {
+                        // Zone de prévisualisation
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .background(BackgroundLightGray, RoundedCornerShape(16.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (capturedBitmap != null) {
                                 Image(
                                     bitmap = capturedBitmap!!.asImageBitmap(),
-                                    contentDescription = "Image capturée",
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
+                                    contentDescription = "Captured image",
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(8.dp),
+                                    contentScale = ContentScale.Fit
+                                )
+                            } else {
+                                Text(
+                                    text = "Image Preview",
+                                    fontSize = 16.sp,
+                                    color = TextLightGray,
+                                    fontWeight = FontWeight.Normal
                                 )
                             }
+                        }
 
-                            // Boutons d'action
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Boutons
+                        if (capturedBitmap != null) {
+                            // Boutons d'action après capture
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 OutlinedButton(
                                     onClick = { capturedBitmap = null },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f).height(54.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = TextBlack
+                                    )
                                 ) {
-                                    Icon(Icons.Default.Close, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Annuler")
+                                    Text("Cancel", fontSize = 16.sp, fontWeight = FontWeight.Medium)
                                 }
 
                                 Button(
                                     onClick = { viewModel.processImage(capturedBitmap!!) },
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f).height(54.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = PrimaryGreen
+                                    )
                                 ) {
-                                    Icon(Icons.Default.Check, contentDescription = null)
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Identifier")
+                                    Text("Identify", fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         } else {
-                            // Boutons de sélection d'image
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            Icon(
-                                imageVector = Icons.Default.PhotoCamera,
-                                contentDescription = null,
-                                modifier = Modifier.size(100.dp),
-                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-                            )
-
-                            Text(
-                                text = "Capturez ou sélectionnez une image",
-                                style = MaterialTheme.typography.titleLarge,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-
-                            Spacer(modifier = Modifier.weight(1f))
-
-                            Button(
-                                onClick = {
-                                    if (cameraPermissionStatus.isGranted) {
-                                        val file = File(context.cacheDir, "photo_${System.currentTimeMillis()}.jpg")
-                                        photoUri = FileProvider.getUriForFile(
-                                            context,
-                                            "${context.packageName}.fileprovider",
-                                            file
-                                        )
-                                        cameraLauncher.launch(photoUri)
-                                    } else {
-                                        cameraPermission.launchPermissionRequest()
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp)
+                            // Boutons de capture/sélection
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                Icon(Icons.Default.PhotoCamera, contentDescription = null)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text("Prendre une Photo", style = MaterialTheme.typography.titleMedium)
-                            }
+                                Button(
+                                    onClick = {
+                                        if (cameraPermissionStatus.isGranted) {
+                                            val file = File(context.cacheDir, "photo_${System.currentTimeMillis()}.jpg")
+                                            photoUri = FileProvider.getUriForFile(
+                                                context,
+                                                "${context.packageName}.fileprovider",
+                                                file
+                                            )
+                                            cameraLauncher.launch(photoUri)
+                                        } else {
+                                            cameraPermission.launchPermissionRequest()
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(54.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = PrimaryGreen
+                                    )
+                                ) {
+                                    Icon(
+                                        Icons.Default.PhotoCamera,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        "Capture Photo",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
 
-                            OutlinedButton(
-                                onClick = { galleryLauncher.launch("image/*") },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp)
-                            ) {
-                                Icon(Icons.Default.PhotoLibrary, contentDescription = null)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text("Sélectionner de la Galerie", style = MaterialTheme.typography.titleMedium)
+                                OutlinedButton(
+                                    onClick = { galleryLauncher.launch("image/*") },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(54.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = TextBlack
+                                    )
+                                ) {
+                                    Icon(
+                                        Icons.Default.Image,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(
+                                        "Select from Gallery",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                         }
+
+                        Spacer(modifier = Modifier.height(20.dp))
                     }
                 }
             }

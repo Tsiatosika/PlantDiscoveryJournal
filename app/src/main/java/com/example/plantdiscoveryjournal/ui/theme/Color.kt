@@ -2,23 +2,28 @@ package com.example.plantdiscoveryjournal.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Couleurs principales - Thème vert naturel
-val Primary = Color(0xFF2D5016)       // Vert foncé
-val PrimaryLight = Color(0xFF4CAF50)  // Vert moyen
-val Secondary = Color(0xFF81C784)     // Vert clair
-val Tertiary = Color(0xFF66BB6A)      // Vert accent
+// Primary Colors
+val PrimaryGreen = Color(0xFF4CAF50)
+val PrimaryGreenLight = Color(0xFFB8E6BC)
 
-// Couleurs de surface
-val Background = Color(0xFFF5F5F5)
-val Surface = Color(0xFFFFFFFF)
-val SurfaceVariant = Color(0xFFE8F5E9)
+// Background Colors
+val BackgroundWhite = Color.White
+val BackgroundGray = Color(0xFFF5F5F5)
+val BackgroundLightGray = Color(0xFFF0F0F0)
 
-// Couleurs de texte
-val OnPrimary = Color(0xFFFFFFFF)
-val OnSecondary = Color(0xFF000000)
-val OnBackground = Color(0xFF1C1B1F)
-val OnSurface = Color(0xFF1C1B1F)
+// Text Colors
+val TextBlack = Color.Black
+val TextGray = Color.Gray
+val TextDarkGray = Color(0xFF424242)
+val TextLightGray = Color(0xFF9E9E9E)
+val TextMediumGray = Color(0xFFBDBDBD)
 
-// Couleurs d'erreur
-val Error = Color(0xFFB00020)
-val OnError = Color(0xFFFFFFFF)
+// Error Colors
+val ErrorRed = Color(0xFFE53935)
+
+// Border Colors
+val BorderGray = Color(0xFFE0E0E0)
+
+// Transparent Colors
+val TransparentGreen = Color(0xFF4CAF50).copy(alpha = 0.3f)
+val TransparentGray = Color(0xFFBDBDBD).copy(alpha = 0.5f)

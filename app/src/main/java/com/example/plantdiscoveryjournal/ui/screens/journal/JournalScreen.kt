@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,8 +16,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.plantdiscoveryjournal.domain.model.Discovery
+import com.example.plantdiscoveryjournal.ui.theme.*
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,17 +37,36 @@ fun JournalScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mon Journal de Découvertes") },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Spa,
+                            contentDescription = null,
+                            tint = PrimaryGreen,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    containerColor = BackgroundWhite,
+                    titleContentColor = TextBlack
                 ),
                 actions = {
+                    IconButton(onClick = { /* Search */ }) {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = TextBlack
+                        )
+                    }
                     IconButton(onClick = onSignOut) {
                         Icon(
                             Icons.Default.ExitToApp,
-                            contentDescription = "Déconnexion",
-                            tint = MaterialTheme.colorScheme.onPrimary
+                            contentDescription = "Sign Out",
+                            tint = TextBlack
                         )
                     }
                 }
@@ -53,15 +75,19 @@ fun JournalScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToCapture,
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = PrimaryGreen,
+                shape = CircleShape,
+                modifier = Modifier.size(56.dp)
             ) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = "Nouvelle découverte",
-                    tint = MaterialTheme.colorScheme.onPrimary
+                    contentDescription = "New discovery",
+                    tint = BackgroundWhite,
+                    modifier = Modifier.size(24.dp)
                 )
             }
-        }
+        },
+        containerColor = BackgroundGray
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -71,7 +97,8 @@ fun JournalScreen(
             when {
                 isLoading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
+                        color = PrimaryGreen
                     )
                 }
                 discoveries.isEmpty() -> {
@@ -80,8 +107,8 @@ fun JournalScreen(
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         items(
                             items = discoveries,
@@ -123,49 +150,66 @@ fun DiscoveryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(12.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = BackgroundWhite)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth()
         ) {
             // Image
             AsyncImage(
                 model = File(discovery.imageLocalPath),
                 contentDescription = discovery.name,
                 modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)),
                 contentScale = ContentScale.Crop
             )
 
-            // Info
+            // Info section
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = discovery.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.Spa,
+                        contentDescription = null,
+                        tint = TextBlack,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        text = discovery.name,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextBlack
+                    )
+                }
 
-                Text(
-                    text = discovery.getFormattedDate(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = TextGray,
+                        modifier = Modifier.size(11.dp)
+                    )
+                    Text(
+                        text = discovery.getFormattedDate(),
+                        fontSize = 12.sp,
+                        color = TextGray
+                    )
+                }
             }
-
-            Icon(
-                Icons.Default.ChevronRight,
-                contentDescription = "Voir détails",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
@@ -181,19 +225,20 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
             imageVector = Icons.Default.Spa,
             contentDescription = null,
             modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+            tint = TransparentGreen
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Aucune découverte",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "No discoveries yet",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextBlack
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Appuyez sur + pour commencer votre journal",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = "Tap + to start your journal",
+            fontSize = 14.sp,
+            color = TextGray
         )
     }
 }
