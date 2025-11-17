@@ -4,6 +4,7 @@ import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -15,11 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.plantdiscoveryjournal.R
 import com.example.plantdiscoveryjournal.ui.viewmodel.AuthViewModel
 import com.example.plantdiscoveryjournal.ui.viewmodel.AuthState
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -90,21 +93,21 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo
-            Surface(
-                modifier = Modifier.size(80.dp),
-                shape = RoundedCornerShape(16.dp),
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "Plant Discovery Journal Logo",
+                modifier = Modifier.size(100.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Titre
+            Text(
+                text = "Plant Discovery Journal",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Spa,
-                        contentDescription = "Logo",
-                        modifier = Modifier.size(48.dp),
-                        tint = Color.White
-                    )
-                }
-            }
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -127,62 +130,47 @@ fun LoginScreen(
                 }
 
                 // Bouton Sign Up (inactif)
-                Button(
+                OutlinedButton(
                     onClick = onNavigateToSignUp,
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text("Sign Up", fontWeight = FontWeight.Normal)
+                    Text("Sign Up")
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Email Address
-            Text(
-                text = "Email Address",
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
+                label = { Text("Email Address") },
                 placeholder = { Text("enter your email") },
+                leadingIcon = {
+                    Icon(Icons.Default.Email, contentDescription = null)
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Password
-            Text(
-                text = "Password",
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
+                label = { Text("Password") },
                 placeholder = { Text("enter your password") },
+                leadingIcon = {
+                    Icon(Icons.Default.Lock, contentDescription = null)
+                },
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                            contentDescription = if (passwordVisible) "Masquer" else "Afficher"
+                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
                         )
                     }
                 },
@@ -190,7 +178,7 @@ fun LoginScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -202,9 +190,9 @@ fun LoginScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(56.dp),
                 enabled = !isLoading && email.isNotBlank() && password.length >= 6,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
@@ -215,11 +203,11 @@ fun LoginScreen(
                         color = Color.White
                     )
                 } else {
-                    Text("Sign In", fontWeight = FontWeight.Bold)
+                    Text("Sign In", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Séparateur OR
             Row(
@@ -231,32 +219,36 @@ fun LoginScreen(
                 Text(
                     text = "OR",
                     modifier = Modifier.padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Divider(modifier = Modifier.weight(1f))
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-            // Bouton Google Sign-In
+            // Bouton Google Sign-In avec icône personnalisée
             OutlinedButton(
                 onClick = {
                     googleSignInLauncher.launch(googleSignInClient.signInIntent)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
+                    .height(56.dp),
                 enabled = !isLoading,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                )
             ) {
                 Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    painter = painterResource(id = R.drawable.ic_google),
+                    contentDescription = "Google Icon",
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Unspecified
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Continue with Google")
+                Spacer(modifier = Modifier.width(12.dp))
+                Text("Continue with Google", style = MaterialTheme.typography.bodyLarge)
             }
         }
     }
