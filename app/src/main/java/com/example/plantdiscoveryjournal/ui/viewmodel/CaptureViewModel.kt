@@ -1,4 +1,4 @@
-package com.example.plantdiscoveryjournal.ui.screens.capture
+package com.example.plantdiscoveryjournal.ui.viewmodel
 
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel

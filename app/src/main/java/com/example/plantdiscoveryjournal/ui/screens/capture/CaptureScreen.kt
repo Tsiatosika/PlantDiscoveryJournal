@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.example.plantdiscoveryjournal.ui.theme.*
+import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureUiState
+import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.isGranted

@@ -1,4 +1,4 @@
-package com.example.plantdiscoveryjournal.ui.screens.detail
+package com.example.plantdiscoveryjournal.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

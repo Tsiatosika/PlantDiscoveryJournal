@@ -1,10 +1,14 @@
-package com.example.plantdiscoveryjournal.ui.screens.journal
+package com.example.plantdiscoveryjournal.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.plantdiscoveryjournal.data.repository.DiscoveryRepository
 import com.example.plantdiscoveryjournal.domain.model.Discovery
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
@@ -19,7 +23,7 @@ class JournalViewModel(
         .getAllDiscoveriesByUser(userId)
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Companion.WhileSubscribed(5000),
             initialValue = emptyList()
         )
 

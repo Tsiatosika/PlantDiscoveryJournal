@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.plantdiscoveryjournal.domain.model.Discovery
 import com.example.plantdiscoveryjournal.ui.theme.*
+import com.example.plantdiscoveryjournal.ui.viewmodel.JournalViewModel
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -8,21 +8,19 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.plantdiscoveryjournal.ui.screens.auth.AuthScreen
-import com.example.plantdiscoveryjournal.ui.screens.auth.AuthState
-import com.example.plantdiscoveryjournal.ui.screens.auth.AuthViewModel
+import com.example.plantdiscoveryjournal.ui.screens.auth.LoginScreen
+import com.example.plantdiscoveryjournal.ui.screens.auth.SignUpScreen
 import com.example.plantdiscoveryjournal.ui.screens.capture.CaptureScreen
-import com.example.plantdiscoveryjournal.ui.screens.capture.CaptureViewModel
 import com.example.plantdiscoveryjournal.ui.screens.detail.DetailScreen
-import com.example.plantdiscoveryjournal.ui.screens.detail.DetailViewModel
 import com.example.plantdiscoveryjournal.ui.screens.journal.JournalScreen
-import com.example.plantdiscoveryjournal.ui.screens.journal.JournalViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.*
 
 /**
  * Définitions des routes de navigation
  */
 sealed class Screen(val route: String) {
-    object Auth : Screen("auth")
+    object Login : Screen("login")
+    object SignUp : Screen("signup")
     object Journal : Screen("journal")
     object Capture : Screen("capture")
     object Detail : Screen("detail/{discoveryId}") {
@@ -43,21 +41,39 @@ fun AppNavGraph(
     // Déterminer le point de départ
     val startDestination = when (authState) {
         is AuthState.Authenticated -> Screen.Journal.route
-        else -> Screen.Auth.route
+        else -> Screen.Login.route
     }
 
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
-        // Écran d'authentification
-        composable(Screen.Auth.route) {
-            AuthScreen(
+        // Écran de connexion
+        composable(Screen.Login.route) {
+            LoginScreen(
                 viewModel = authViewModel,
                 onAuthSuccess = {
                     navController.navigate(Screen.Journal.route) {
-                        popUpTo(Screen.Auth.route) { inclusive = true }
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                },
+                onNavigateToSignUp = {
+                    navController.navigate(Screen.SignUp.route)
+                }
+            )
+        }
+
+        // Écran d'inscription
+        composable(Screen.SignUp.route) {
+            SignUpScreen(
+                viewModel = authViewModel,
+                onAuthSuccess = {
+                    navController.navigate(Screen.Journal.route) {
+                        popUpTo(Screen.SignUp.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.popBackStack()
                 }
             )
         }
@@ -77,7 +93,7 @@ fun AppNavGraph(
                 },
                 onSignOut = {
                     authViewModel.signOut()
-                    navController.navigate(Screen.Auth.route) {
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 }

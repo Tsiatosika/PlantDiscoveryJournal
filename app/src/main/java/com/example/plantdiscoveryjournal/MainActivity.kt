@@ -12,10 +12,10 @@ import com.example.plantdiscoveryjournal.data.local.database.AppDatabase
 import com.example.plantdiscoveryjournal.data.repository.AuthRepository
 import com.example.plantdiscoveryjournal.data.repository.DiscoveryRepository
 import com.example.plantdiscoveryjournal.ui.navigation.AppNavGraph
-import com.example.plantdiscoveryjournal.ui.screens.auth.AuthViewModel
-import com.example.plantdiscoveryjournal.ui.screens.capture.CaptureViewModel
-import com.example.plantdiscoveryjournal.ui.screens.detail.DetailViewModel
-import com.example.plantdiscoveryjournal.ui.screens.journal.JournalViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.AuthViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.DetailViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.JournalViewModel
 import com.example.plantdiscoveryjournal.ui.theme.PlantDiscoveryTheme
 
 class MainActivity : ComponentActivity() {
