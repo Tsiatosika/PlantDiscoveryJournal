@@ -353,7 +353,7 @@ fun SignUpScreen(
                 )
             ) {
                 Icon(
-                    painter = painterResource(id = R.drawable.ic_google),
+                    painter = painterResource(id = R.drawable.google),
                     contentDescription = "Google Icon",
                     modifier = Modifier.size(24.dp),
                     tint = Color.Unspecified
