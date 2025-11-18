@@ -4,6 +4,8 @@ import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -93,6 +95,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Logo - Utilisation de votre image leaf
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Plant Discovery Journal Logo",
@@ -111,30 +114,85 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Onglets Sign In / Sign Up
-            Row(
+            // Onglets Sign In / Sign Up avec animations fluides
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ) {
-                // Bouton Sign In (actif)
-                Button(
-                    onClick = { /* Déjà sur Sign In */ },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = Color.White
-                    ),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text("Sign In", fontWeight = FontWeight.Bold)
-                }
+                    // Bouton Sign In (actif) avec animation
+                    val signInBackground by animateColorAsState(
+                        targetValue = Color(0xFF4CAF50), // Vert
+                        animationSpec = tween(durationMillis = 400),
+                        label = "signInBackground"
+                    )
+                    val signInTextColor by animateColorAsState(
+                        targetValue = Color.White,
+                        animationSpec = tween(durationMillis = 400),
+                        label = "signInTextColor"
+                    )
 
-                // Bouton Sign Up (inactif)
-                OutlinedButton(
-                    onClick = onNavigateToSignUp,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Sign Up")
+                    Button(
+                        onClick = { /* Déjà sur Sign In */ },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = signInBackground,
+                            contentColor = signInTextColor
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 0.dp,
+                            pressedElevation = 2.dp
+                        )
+                    ) {
+                        Text(
+                            "Sign In",
+                            fontWeight = FontWeight.SemiBold,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+
+                    // Bouton Sign Up (inactif) avec animation
+                    val signUpBackground by animateColorAsState(
+                        targetValue = Color.Transparent,
+                        animationSpec = tween(durationMillis = 400),
+                        label = "signUpBackground"
+                    )
+                    val signUpTextColor by animateColorAsState(
+                        targetValue = MaterialTheme.colorScheme.onSurfaceVariant,
+                        animationSpec = tween(durationMillis = 400),
+                        label = "signUpTextColor"
+                    )
+
+                    Button(
+                        onClick = onNavigateToSignUp,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = signUpBackground,
+                            contentColor = signUpTextColor
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 0.dp,
+                            pressedElevation = 0.dp
+                        )
+                    ) {
+                        Text(
+                            "Sign Up",
+                            fontWeight = FontWeight.Normal,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
             }
 

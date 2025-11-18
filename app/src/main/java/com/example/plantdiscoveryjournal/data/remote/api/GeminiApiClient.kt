@@ -15,7 +15,7 @@ object GeminiApiClient {
 
     // Modèle Gemini Pro Vision pour l'analyse d'images
     private val model = GenerativeModel(
-        modelName = "gemini-1.5-flash",
+        modelName = "gemini-1.5-pro-latest",
         apiKey = API_KEY
     )
 
