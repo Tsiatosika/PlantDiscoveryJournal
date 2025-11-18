@@ -1,5 +1,6 @@
 package com.example.plantdiscoveryjournal.ui.screens.journal
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,7 +14,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,6 +25,7 @@ import com.example.plantdiscoveryjournal.domain.model.Discovery
 import com.example.plantdiscoveryjournal.ui.theme.*
 import com.example.plantdiscoveryjournal.ui.viewmodel.JournalViewModel
 import java.io.File
+import com.example.plantdiscoveryjournal.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +48,7 @@ fun JournalScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
-                            Icons.Default.Spa,
+                            painter = painterResource(id = R.drawable.logo),
                             contentDescription = null,
                             tint = PrimaryGreen,
                             modifier = Modifier.size(24.dp)
@@ -181,7 +185,7 @@ fun DiscoveryCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        Icons.Default.Spa,
+                        painter = painterResource(id = R.drawable.logo),
                         contentDescription = null,
                         tint = TextBlack,
                         modifier = Modifier.size(14.dp)
@@ -222,13 +226,13 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Spa,
+        Image(
+            painter = painterResource(id = R.drawable.logo),
             contentDescription = null,
-            modifier = Modifier.size(100.dp),
-            tint = TransparentGreen
+            modifier = Modifier.size(100.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = "No discoveries yet",
             fontSize = 20.sp,
