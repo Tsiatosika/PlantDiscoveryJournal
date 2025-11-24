@@ -43,6 +43,7 @@ fun JournalScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchActive by viewModel.isSearchActive.collectAsState()
 
+    var showSignOutDialog by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(isSearchActive) {
@@ -106,7 +107,7 @@ fun JournalScreen(
                                 tint = TextBlack
                             )
                         }
-                        IconButton(onClick = onSignOut) {
+                        IconButton(onClick = { showSignOutDialog = true }) {
                             Icon(
                                 Icons.Default.ExitToApp,
                                 contentDescription = "Déconnexion",
@@ -187,6 +188,89 @@ fun JournalScreen(
                 }
             }
         }
+    }
+
+    // Dialogue de confirmation de déconnexion
+    if (showSignOutDialog) {
+        AlertDialog(
+            onDismissRequest = { showSignOutDialog = false },
+            icon = {
+                Icon(
+                    painter = painterResource(R.drawable.logo),
+                    contentDescription = null,
+                    tint = PrimaryGreen,
+                    modifier = Modifier.size(40.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Déconnexion",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            },
+            text = {
+                Text(
+                    text = "Êtes-vous sûr de vouloir vous déconnecter de votre compte ?",
+                    fontSize = 16.sp,
+                    color = TextGray
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSignOutDialog = false
+                        onSignOut()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PrimaryGreen,
+                        contentColor = BackgroundWhite
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            Icons.Default.ExitToApp,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Se déconnecter",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showSignOutDialog = false },
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = TextBlack
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = "Annuler",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp
+                    )
+                }
+            },
+            shape = RoundedCornerShape(16.dp),
+            containerColor = BackgroundWhite
+        )
     }
 }
 
