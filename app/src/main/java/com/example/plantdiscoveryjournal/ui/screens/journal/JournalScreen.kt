@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -38,21 +40,49 @@ fun JournalScreen(
     val discoveries by viewModel.discoveries.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val isSearchActive by viewModel.isSearchActive.collectAsState()
+
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(isSearchActive) {
+        if (isSearchActive) {
+            focusRequester.requestFocus()
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.logo),
-                            contentDescription = null,
-                            tint = PrimaryGreen,
-                            modifier = Modifier.size(24.dp)
+                    if (isSearchActive) {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { viewModel.updateSearchQuery(it) },
+                            placeholder = { Text("Rechercher...") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = BackgroundWhite,
+                                unfocusedContainerColor = BackgroundWhite,
+                                focusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent,
+                                unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
+                            ),
+                            singleLine = true
                         )
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.logo),
+                                contentDescription = null,
+                                tint = PrimaryGreen,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -60,19 +90,29 @@ fun JournalScreen(
                     titleContentColor = TextBlack
                 ),
                 actions = {
-                    IconButton(onClick = { /* Search */ }) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = TextBlack
-                        )
-                    }
-                    IconButton(onClick = onSignOut) {
-                        Icon(
-                            Icons.Default.ExitToApp,
-                            contentDescription = "Sign Out",
-                            tint = TextBlack
-                        )
+                    if (isSearchActive) {
+                        IconButton(onClick = { viewModel.clearSearch() }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Fermer la recherche",
+                                tint = TextBlack
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = { viewModel.toggleSearch() }) {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = "Rechercher",
+                                tint = TextBlack
+                            )
+                        }
+                        IconButton(onClick = onSignOut) {
+                            Icon(
+                                Icons.Default.ExitToApp,
+                                contentDescription = "Déconnexion",
+                                tint = TextBlack
+                            )
+                        }
                     }
                 }
             )
@@ -86,7 +126,7 @@ fun JournalScreen(
             ) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = "New discovery",
+                    contentDescription = "Nouvelle découverte",
                     tint = BackgroundWhite,
                     modifier = Modifier.size(24.dp)
                 )
@@ -107,7 +147,11 @@ fun JournalScreen(
                     )
                 }
                 discoveries.isEmpty() -> {
-                    EmptyStateView(modifier = Modifier.align(Alignment.Center))
+                    if (isSearchActive && searchQuery.isNotBlank()) {
+                        NoResultsView(modifier = Modifier.align(Alignment.Center))
+                    } else {
+                        EmptyStateView(modifier = Modifier.align(Alignment.Center))
+                    }
                 }
                 else -> {
                     LazyColumn(
@@ -234,14 +278,44 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "No discoveries yet",
+            text = "Aucune découverte",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = TextBlack
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Tap + to start your journal",
+            text = "Appuyez sur + pour commencer",
+            fontSize = 14.sp,
+            color = TextGray
+        )
+    }
+}
+
+@Composable
+fun NoResultsView(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            Icons.Default.SearchOff,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = TextGray
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "Aucun résultat",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = TextBlack
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Essayez une autre recherche",
             fontSize = 14.sp,
             color = TextGray
         )

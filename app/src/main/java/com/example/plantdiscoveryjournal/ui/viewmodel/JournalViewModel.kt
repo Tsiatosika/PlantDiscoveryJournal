@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -19,19 +20,60 @@ class JournalViewModel(
     private val userId: String
 ) : ViewModel() {
 
-    val discoveries: StateFlow<List<Discovery>> = repository
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private val _isSearchActive = MutableStateFlow(false)
+    val isSearchActive: StateFlow<Boolean> = _isSearchActive.asStateFlow()
+
+    private val allDiscoveries = repository
         .getAllDiscoveriesByUser(userId)
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Companion.WhileSubscribed(5000),
+            started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    val discoveries: StateFlow<List<Discovery>> = combine(
+        allDiscoveries,
+        _searchQuery
+    ) { discoveries, query ->
+        if (query.isBlank()) {
+            discoveries
+        } else {
+            discoveries.filter { discovery ->
+                discovery.name.contains(query, ignoreCase = true) ||
+                        discovery.location.contains(query, ignoreCase = true) ||
+                        discovery.notes.contains(query, ignoreCase = true)
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun toggleSearch() {
+        _isSearchActive.value = !_isSearchActive.value
+        if (!_isSearchActive.value) {
+            _searchQuery.value = ""
+        }
+    }
+
+    fun clearSearch() {
+        _searchQuery.value = ""
+        _isSearchActive.value = false
+    }
 
     fun deleteDiscovery(discoveryId: Long) {
         viewModelScope.launch {
