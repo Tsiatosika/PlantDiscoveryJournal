@@ -23,18 +23,30 @@ class CaptureViewModel(
     fun processImage(bitmap: Bitmap) {
         viewModelScope.launch {
             try {
-                _uiState.value = CaptureUiState.Processing("Sauvegarde de l'image...")
+                _uiState.value = CaptureUiState.Processing(
+                    message = "Saving image...",
+                    capturedImage = bitmap,
+                    progress = 0.2f
+                )
 
                 // Sauvegarder l'image localement
                 val imagePath = repository.saveImageLocally(bitmap, userId)
 
-                _uiState.value = CaptureUiState.Processing("Identification en cours...")
+                _uiState.value = CaptureUiState.Processing(
+                    message = "Analyzing with AI...",
+                    capturedImage = bitmap,
+                    progress = 0.5f
+                )
 
                 // Identifier avec l'IA
                 val result = repository.identifyPlant(imagePath)
 
                 result.onSuccess { identification ->
-                    _uiState.value = CaptureUiState.Processing("Enregistrement de la découverte...")
+                    _uiState.value = CaptureUiState.Processing(
+                        message = "Saving discovery...",
+                        capturedImage = bitmap,
+                        progress = 0.8f
+                    )
 
                     // Sauvegarder dans la base de données
                     val discoveryId = repository.saveDiscovery(
@@ -48,12 +60,14 @@ class CaptureViewModel(
                     _uiState.value = CaptureUiState.Success(discoveryId)
                 }.onFailure { error ->
                     _uiState.value = CaptureUiState.Error(
-                        error.localizedMessage ?: "Erreur lors de l'identification"
+                        message = error.localizedMessage ?: "Identification error",
+                        capturedImage = bitmap
                     )
                 }
             } catch (e: Exception) {
                 _uiState.value = CaptureUiState.Error(
-                    e.localizedMessage ?: "Erreur inconnue"
+                    message = e.localizedMessage ?: "Unknown error",
+                    capturedImage = bitmap
                 )
             }
         }
@@ -66,7 +80,17 @@ class CaptureViewModel(
 
 sealed class CaptureUiState {
     object Idle : CaptureUiState()
-    data class Processing(val message: String) : CaptureUiState()
+
+    data class Processing(
+        val message: String,
+        val capturedImage: Bitmap,
+        val progress: Float = 0.5f
+    ) : CaptureUiState()
+
     data class Success(val discoveryId: Long) : CaptureUiState()
-    data class Error(val message: String) : CaptureUiState()
+
+    data class Error(
+        val message: String,
+        val capturedImage: Bitmap? = null
+    ) : CaptureUiState()
 }

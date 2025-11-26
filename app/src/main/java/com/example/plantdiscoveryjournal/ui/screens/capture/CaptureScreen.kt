@@ -26,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
+import com.example.plantdiscoveryjournal.ui.components.ProcessingOverlay
+import com.example.plantdiscoveryjournal.ui.components.ErrorOverlay
 import com.example.plantdiscoveryjournal.ui.theme.*
 import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureUiState
 import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureViewModel
@@ -89,22 +91,11 @@ fun CaptureScreen(
         }
     }
 
-    // Gérer les états
+    // Gérer les états de succès
     LaunchedEffect(uiState) {
-        when (uiState) {
-            is CaptureUiState.Success -> {
-                onNavigateToDetail((uiState as CaptureUiState.Success).discoveryId)
-                viewModel.resetState()
-            }
-            is CaptureUiState.Error -> {
-                Toast.makeText(
-                    context,
-                    (uiState as CaptureUiState.Error).message,
-                    Toast.LENGTH_LONG
-                ).show()
-                viewModel.resetState()
-            }
-            else -> {}
+        if (uiState is CaptureUiState.Success) {
+            onNavigateToDetail((uiState as CaptureUiState.Success).discoveryId)
+            viewModel.resetState()
         }
     }
 
@@ -136,29 +127,36 @@ fun CaptureScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Contenu principal
             when (val state = uiState) {
                 is CaptureUiState.Processing -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(64.dp),
-                            color = PrimaryGreen
-                        )
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(
-                            text = state.message,
-                            fontSize = 16.sp,
-                            color = TextBlack,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
+                    // Overlay de traitement avec image en arrière-plan
+                    ProcessingOverlay(
+                        bitmap = state.capturedImage,
+                        message = state.message,
+                        progress = state.progress
+                    )
                 }
+
+                is CaptureUiState.Error -> {
+                    // Overlay d'erreur
+                    ErrorOverlay(
+                        bitmap = state.capturedImage,
+                        message = state.message,
+                        onRetry = {
+                            state.capturedImage?.let { bitmap ->
+                                viewModel.processImage(bitmap)
+                            }
+                        },
+                        onCancel = {
+                            viewModel.resetState()
+                            capturedBitmap = null
+                        }
+                    )
+                }
+
                 else -> {
+                    // Interface normale de capture
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
