@@ -24,7 +24,9 @@ android {
             useSupportLibrary = true
         }
 
-        // Support pour 16KB page size
+        val geminiApiKey = project.properties["GEMINI_API_KEY"] as? String ?: ""
+        buildConfigField("String", "GEMINI_API_KEY", "\"$geminiApiKey\"")
+
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
@@ -51,6 +53,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     composeOptions {
@@ -119,8 +122,8 @@ dependencies {
     // Gson
     implementation("com.google.code.gson:gson:2.10.1")
 
-    // Google Gemini AI
-    implementation("com.google.ai.client.generativeai:generativeai:0.1.2")
+    // Google Gemini AI (Version mise à jour)
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

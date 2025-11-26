@@ -1,1 +1,40 @@
-/build
+# Fichiers de configuration avec secrets
+local.properties
+gradle.properties
+
+# IMPORTANT: Fichier contenant la clé API
+../build.gradle.properties
+
+# Fichiers Android
+*.apk
+*.aar
+*.ap_
+*.aab
+*.ap__
+*.dex
+*.class
+
+# Build folders
+build/
+.gradle/
+*.iml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Firebase
+google-services.json
+
+# Clés et secrets
+*.key
+*.keystore
+*.jks
+
+# Divers
+*.log
+.cxx/
