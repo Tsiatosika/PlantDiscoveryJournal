@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.plantdiscoveryjournal.domain.model.Discovery
 import com.example.plantdiscoveryjournal.ui.theme.*
+import com.example.plantdiscoveryjournal.ui.viewmodel.JournalSortOption
 import com.example.plantdiscoveryjournal.ui.viewmodel.JournalViewModel
 import java.io.File
 import com.example.plantdiscoveryjournal.R
@@ -45,8 +46,10 @@ fun JournalScreen(
     val error by viewModel.error.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchActive by viewModel.isSearchActive.collectAsState()
+    val sortOption by viewModel.sortOption.collectAsState()
 
     var showSignOutDialog by remember { mutableStateOf(false) }
+    var showSortMenu by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(isSearchActive) {
@@ -102,10 +105,6 @@ fun JournalScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundWhite,
-                    titleContentColor = TextBlack
-                ),
                 actions = {
                     if (isSearchActive) {
                         IconButton(onClick = { viewModel.clearSearch() }) {
@@ -124,6 +123,62 @@ fun JournalScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
+
+                        // Menu de tri
+                        IconButton(onClick = { showSortMenu = true }) {
+                            Icon(
+                                Icons.Default.Sort,
+                                contentDescription = "Trier",
+                                tint = PrimaryGreen,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showSortMenu,
+                            onDismissRequest = { showSortMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "Plus récentes",
+                                        fontWeight = if (sortOption == JournalSortOption.MOST_RECENT)
+                                            FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    viewModel.setSortOption(JournalSortOption.MOST_RECENT)
+                                    showSortMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "A → Z",
+                                        fontWeight = if (sortOption == JournalSortOption.NAME_ASC)
+                                            FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    viewModel.setSortOption(JournalSortOption.NAME_ASC)
+                                    showSortMenu = false
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "Z → A",
+                                        fontWeight = if (sortOption == JournalSortOption.NAME_DESC)
+                                            FontWeight.SemiBold else FontWeight.Normal
+                                    )
+                                },
+                                onClick = {
+                                    viewModel.setSortOption(JournalSortOption.NAME_DESC)
+                                    showSortMenu = false
+                                }
+                            )
+                        }
+
                         IconButton(onClick = { showSignOutDialog = true }) {
                             Icon(
                                 Icons.Default.ExitToApp,
@@ -133,6 +188,10 @@ fun JournalScreen(
                         }
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = BackgroundWhite,
+                    titleContentColor = TextBlack
+                ),
                 modifier = Modifier.shadow(2.dp)
             )
         },
@@ -168,13 +227,19 @@ fun JournalScreen(
                         strokeWidth = 3.dp
                     )
                 }
+
                 discoveries.isEmpty() -> {
                     if (isSearchActive && searchQuery.isNotBlank()) {
-                        NoResultsView(modifier = Modifier.align(Alignment.Center))
+                        NoResultsView(
+                            modifier = Modifier.align(Alignment.Center)
+                        )
                     } else {
-                        EmptyStateView(modifier = Modifier.align(Alignment.Center))
+                        EmptyStateView(
+                            modifier = Modifier.align(Alignment.Center)
+                        )
                     }
                 }
+
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
@@ -194,7 +259,6 @@ fun JournalScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     color = TextGray
                                 )
-
                                 Surface(
                                     color = PrimaryGreen.copy(alpha = 0.1f),
                                     shape = RoundedCornerShape(20.dp)
@@ -221,6 +285,7 @@ fun JournalScreen(
                             }
                         }
 
+                        // Cartes
                         items(
                             items = discoveries,
                             key = { it.id }
@@ -231,7 +296,7 @@ fun JournalScreen(
                             )
                         }
 
-                        // Espacement en bas pour le FAB
+                        // Espace pour le FAB
                         item {
                             Spacer(modifier = Modifier.height(80.dp))
                         }
@@ -239,6 +304,7 @@ fun JournalScreen(
                 }
             }
 
+            // Snackbar d'erreur
             error?.let { errorMessage ->
                 Snackbar(
                     modifier = Modifier
@@ -254,90 +320,90 @@ fun JournalScreen(
                     Text(errorMessage, color = BackgroundWhite)
                 }
             }
-        }
-    }
 
-    // Dialogue de confirmation de déconnexion
-    if (showSignOutDialog) {
-        AlertDialog(
-            onDismissRequest = { showSignOutDialog = false },
-            icon = {
-                Icon(
-                    painter = painterResource(R.drawable.logo),
-                    contentDescription = null,
-                    tint = PrimaryGreen,
-                    modifier = Modifier.size(40.dp)
-                )
-            },
-            title = {
-                Text(
-                    text = "Déconnexion",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-            },
-            text = {
-                Text(
-                    text = "Êtes-vous sûr de vouloir vous déconnecter de votre compte ?",
-                    fontSize = 16.sp,
-                    color = TextGray
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showSignOutDialog = false
-                        onSignOut()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PrimaryGreen,
-                        contentColor = BackgroundWhite
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+            // Dialogue de déconnexion
+            if (showSignOutDialog) {
+                AlertDialog(
+                    onDismissRequest = { showSignOutDialog = false },
+                    icon = {
                         Icon(
-                            Icons.Default.ExitToApp,
+                            painter = painterResource(id = R.drawable.logo),
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+                            tint = PrimaryGreen,
+                            modifier = Modifier.size(40.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                    },
+                    title = {
                         Text(
-                            text = "Se déconnecter",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 16.sp
+                            text = "Déconnexion",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
                         )
-                    }
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = { showSignOutDialog = false },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = TextBlack
-                    ),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    Text(
-                        text = "Annuler",
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 16.sp
-                    )
-                }
-            },
-            shape = RoundedCornerShape(16.dp),
-            containerColor = BackgroundWhite
-        )
+                    },
+                    text = {
+                        Text(
+                            text = "Êtes-vous sûr de vouloir vous déconnecter de votre compte ?",
+                            fontSize = 16.sp,
+                            color = TextGray
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showSignOutDialog = false
+                                onSignOut()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PrimaryGreen,
+                                contentColor = BackgroundWhite
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(
+                                    Icons.Default.ExitToApp,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Se déconnecter",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 16.sp
+                                )
+                            }
+                        }
+                    },
+                    dismissButton = {
+                        OutlinedButton(
+                            onClick = { showSignOutDialog = false },
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = TextBlack
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        ) {
+                            Text(
+                                text = "Annuler",
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 16.sp
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    containerColor = BackgroundWhite
+                )
+            }
+        }
     }
 }
 
@@ -355,9 +421,7 @@ fun DiscoveryCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = BackgroundWhite)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             // Image avec overlay gradient
             Box {
                 AsyncImage(
@@ -370,7 +434,6 @@ fun DiscoveryCard(
                     contentScale = ContentScale.Crop
                 )
 
-                // Gradient overlay pour meilleure lisibilité
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -388,7 +451,6 @@ fun DiscoveryCard(
                         )
                 )
 
-                // Badge en haut à droite
                 Surface(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -409,7 +471,7 @@ fun DiscoveryCard(
                             modifier = Modifier.size(12.dp)
                         )
                         Text(
-                            text = "Identifiée",
+                            text = "Identifié",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = BackgroundWhite
@@ -418,14 +480,12 @@ fun DiscoveryCard(
                 }
             }
 
-            // Info section améliorée
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Nom de la plante
                 Text(
                     text = discovery.name,
                     fontSize = 18.sp,
@@ -433,7 +493,6 @@ fun DiscoveryCard(
                     color = TextBlack
                 )
 
-                // Date avec icône
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -452,14 +511,12 @@ fun DiscoveryCard(
                     )
                 }
 
-                // Divider subtil
                 Divider(
                     modifier = Modifier.padding(vertical = 4.dp),
                     color = BackgroundGray,
                     thickness = 1.dp
                 )
 
-                // Action hint
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -490,15 +547,12 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Icône plus grande et colorée
         Surface(
             color = PrimaryGreen.copy(alpha = 0.1f),
             shape = CircleShape,
             modifier = Modifier.size(120.dp)
         ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
+            Box(contentAlignment = Alignment.Center) {
                 Icon(
                     painter = painterResource(id = R.drawable.logo),
                     contentDescription = null,
@@ -516,9 +570,11 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             color = TextBlack
         )
+
         Spacer(modifier = Modifier.height(12.dp))
+
         Text(
-            text = "Commencez votre aventure botanique\nen découvrant votre première plante",
+            text = "Commencez votre aventure botanique en découvrant votre première plante.",
             fontSize = 15.sp,
             color = TextGray,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -527,7 +583,6 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Bouton call-to-action visuel
         Surface(
             color = PrimaryGreen.copy(alpha = 0.1f),
             shape = RoundedCornerShape(12.dp)
@@ -566,9 +621,7 @@ fun NoResultsView(modifier: Modifier = Modifier) {
             shape = CircleShape,
             modifier = Modifier.size(100.dp)
         ) {
-            Box(
-                contentAlignment = Alignment.Center
-            ) {
+            Box(contentAlignment = Alignment.Center) {
                 Icon(
                     Icons.Default.SearchOff,
                     contentDescription = null,
@@ -586,9 +639,11 @@ fun NoResultsView(modifier: Modifier = Modifier) {
             fontWeight = FontWeight.Bold,
             color = TextBlack
         )
+
         Spacer(modifier = Modifier.height(10.dp))
+
         Text(
-            text = "Essayez une autre recherche\nou découvrez de nouvelles plantes",
+            text = "Essayez une autre recherche ou découvrez de nouvelles plantes.",
             fontSize = 14.sp,
             color = TextGray,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,

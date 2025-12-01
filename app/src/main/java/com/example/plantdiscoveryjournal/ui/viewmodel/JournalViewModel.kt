@@ -12,6 +12,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+// Options de tri pour le journal
+enum class JournalSortOption {
+    MOST_RECENT,
+    NAME_ASC,
+    NAME_DESC
+}
+
 /**
  * ViewModel pour l'écran liste du journal
  */
@@ -26,6 +33,10 @@ class JournalViewModel(
     private val _isSearchActive = MutableStateFlow(false)
     val isSearchActive: StateFlow<Boolean> = _isSearchActive.asStateFlow()
 
+    // Nouvel état : option de tri
+    private val _sortOption = MutableStateFlow(JournalSortOption.MOST_RECENT)
+    val sortOption: StateFlow<JournalSortOption> = _sortOption.asStateFlow()
+
     private val allDiscoveries = repository
         .getAllDiscoveriesByUser(userId)
         .stateIn(
@@ -34,11 +45,13 @@ class JournalViewModel(
             initialValue = emptyList()
         )
 
+    // Découvertes filtrées par recherche puis triées selon l'option choisie
     val discoveries: StateFlow<List<Discovery>> = combine(
         allDiscoveries,
-        _searchQuery
-    ) { discoveries, query ->
-        if (query.isBlank()) {
+        _searchQuery,
+        _sortOption
+    ) { discoveries, query, sort ->
+        val filtered = if (query.isBlank()) {
             discoveries
         } else {
             discoveries.filter { discovery ->
@@ -46,6 +59,17 @@ class JournalViewModel(
                         discovery.location.contains(query, ignoreCase = true) ||
                         discovery.notes.contains(query, ignoreCase = true)
             }
+        }
+
+        when (sort) {
+            JournalSortOption.MOST_RECENT ->
+                filtered.sortedByDescending { it.timestamp }  // adapte si ton champ s'appelle différemment
+
+            JournalSortOption.NAME_ASC ->
+                filtered.sortedBy { it.name.lowercase() }
+
+            JournalSortOption.NAME_DESC ->
+                filtered.sortedByDescending { it.name.lowercase() }
         }
     }.stateIn(
         scope = viewModelScope,
@@ -73,6 +97,10 @@ class JournalViewModel(
     fun clearSearch() {
         _searchQuery.value = ""
         _isSearchActive.value = false
+    }
+
+    fun setSortOption(option: JournalSortOption) {
+        _sortOption.value = option
     }
 
     fun deleteDiscovery(discoveryId: Long) {
