@@ -44,6 +44,7 @@ fun SignUpScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val authState by viewModel.authState.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -71,24 +72,30 @@ fun SignUpScreen(
                 val account = task.getResult(ApiException::class.java)
                 viewModel.signInWithGoogle(account)
             } catch (e: ApiException) {
-                Toast.makeText(context, "Erreur Google Sign-In: ${e.message}", Toast.LENGTH_SHORT).show()
+                errorMessage = "Erreur Google Sign-In: ${e.message}"
             }
         }
     }
 
     // Gérer les états d'authentification
     LaunchedEffect(authState) {
+        println("🔍 SignUpScreen - AuthState changé: $authState")
         when (authState) {
-            is AuthState.Authenticated -> onAuthSuccess()
+            is AuthState.Authenticated -> {
+                println("✅ Inscription réussie")
+                errorMessage = null
+                onAuthSuccess()
+            }
             is AuthState.Error -> {
-                Toast.makeText(
-                    context,
-                    (authState as AuthState.Error).message,
-                    Toast.LENGTH_LONG
-                ).show()
+                val error = (authState as AuthState.Error).message
+                println("❌ Erreur d'inscription: $error")
+                errorMessage = error
                 viewModel.clearError()
             }
-            AuthState.Unauthenticated -> {}
+            AuthState.Unauthenticated -> {
+                println("⚪ État non authentifié")
+                errorMessage = null
+            }
         }
     }
 
@@ -106,7 +113,7 @@ fun SignUpScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Logo - Utilisation de votre image leaf
+            // Logo
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Plant Discovery Journal Logo",
@@ -123,7 +130,7 @@ fun SignUpScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Onglets Sign In / Sign Up avec animations fluides
             Surface(
@@ -137,7 +144,6 @@ fun SignUpScreen(
                         .padding(4.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    // Bouton Sign In (inactif) avec animation
                     val signInBackground by animateColorAsState(
                         targetValue = Color.Transparent,
                         animationSpec = tween(durationMillis = 400),
@@ -171,9 +177,8 @@ fun SignUpScreen(
                         )
                     }
 
-                    // Bouton Sign Up (actif) avec animation
                     val signUpBackground by animateColorAsState(
-                        targetValue = Color(0xFF4CAF50), // Vert
+                        targetValue = Color(0xFF4CAF50),
                         animationSpec = tween(durationMillis = 400),
                         label = "signUpBackground"
                     )
@@ -208,6 +213,47 @@ fun SignUpScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // NOUVEAU: Affichage d'erreur en rouge juste au-dessus de l'email
+            if (errorMessage != null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFFFEBEE) // Rouge clair
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "Error",
+                            tint = Color(0xFFD32F2F), // Rouge foncé
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = errorMessage ?: "",
+                            color = Color(0xFFD32F2F), // Rouge foncé
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(
+                            onClick = { errorMessage = null },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Fermer",
+                                tint = Color(0xFFD32F2F)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Email Address
             OutlinedTextField(
@@ -296,7 +342,7 @@ fun SignUpScreen(
                     if (passwordsMatch) {
                         viewModel.signUp(email, password)
                     } else {
-                        Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                        errorMessage = "Passwords do not match"
                     }
                 },
                 modifier = Modifier
@@ -338,7 +384,7 @@ fun SignUpScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Bouton Google Sign-In avec icône personnalisée
+            // Bouton Google Sign-In
             OutlinedButton(
                 onClick = {
                     googleSignInLauncher.launch(googleSignInClient.signInIntent)

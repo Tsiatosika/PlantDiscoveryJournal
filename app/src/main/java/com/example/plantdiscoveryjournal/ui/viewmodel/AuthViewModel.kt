@@ -36,48 +36,113 @@ class AuthViewModel(private val authRepository: AuthRepository) : ViewModel() {
     fun signIn(email: String, password: String) {
         viewModelScope.launch {
             _isLoading.value = true
+            _authState.value = AuthState.Unauthenticated // Reset l'état d'erreur précédent
+
             authRepository.signInWithEmail(email, password)
                 .onSuccess { user ->
                     _authState.value = AuthState.Authenticated(user.uid)
+                    _isLoading.value = false
                 }
                 .onFailure { error ->
-                    _authState.value = AuthState.Error(
-                        error.localizedMessage ?: "Erreur de connexion"
-                    )
+                    val rawMessage = error.message ?: ""
+
+                    val errorMessage = when {
+                        // Email ou mot de passe incorrect
+                        rawMessage.contains("password is invalid", ignoreCase = true) ||
+                                rawMessage.contains("INVALID_LOGIN_CREDENTIALS", ignoreCase = true) ||
+                                rawMessage.contains("The supplied auth credential is incorrect", ignoreCase = true) ->
+                            "Email or password incorrect"
+
+                        // Aucun compte avec cet email
+                        rawMessage.contains("no user record", ignoreCase = true) ||
+                                rawMessage.contains("USER_NOT_FOUND", ignoreCase = true) ->
+                            "No account found with this email"
+
+                        // Email mal formé
+                        rawMessage.contains("badly formatted", ignoreCase = true) ||
+                                rawMessage.contains("INVALID_EMAIL", ignoreCase = true) ->
+                            "Invalid email format"
+
+                        // Erreur réseau
+                        rawMessage.contains("network", ignoreCase = true) ||
+                                rawMessage.contains("A network error", ignoreCase = true) ->
+                            "Network connection error"
+
+                        else -> "Unknown authentication error"
+                    }
+
+                    _authState.value = AuthState.Error(errorMessage)
+                    _isLoading.value = false
                 }
-            _isLoading.value = false
         }
     }
 
     fun signUp(email: String, password: String) {
         viewModelScope.launch {
             _isLoading.value = true
+            _authState.value = AuthState.Unauthenticated // Reset l'état d'erreur précédent
+
             authRepository.signUpWithEmail(email, password)
                 .onSuccess { user ->
                     _authState.value = AuthState.Authenticated(user.uid)
+                    _isLoading.value = false
                 }
                 .onFailure { error ->
-                    _authState.value = AuthState.Error(
-                        error.localizedMessage ?: "Erreur d'inscription"
-                    )
+                    val rawMessage = error.message ?: ""
+
+                    val errorMessage = when {
+                        rawMessage.contains("email address is already in use", ignoreCase = true) ||
+                                rawMessage.contains("EMAIL_EXISTS", ignoreCase = true) ->
+                            "This email is already in use"
+
+                        rawMessage.contains("password should be at least 6 characters", ignoreCase = true) ||
+                                rawMessage.contains("WEAK_PASSWORD", ignoreCase = true) ->
+                            "Password must be at least 6 characters"
+
+                        rawMessage.contains("badly formatted", ignoreCase = true) ||
+                                rawMessage.contains("INVALID_EMAIL", ignoreCase = true) ->
+                            "Invalid email format"
+
+                        rawMessage.contains("network", ignoreCase = true) ||
+                                rawMessage.contains("A network error", ignoreCase = true) ->
+                            "Network connection error"
+
+                        else -> "Unknown sign up error"
+                    }
+
+                    _authState.value = AuthState.Error(errorMessage)
+                    _isLoading.value = false
                 }
-            _isLoading.value = false
         }
     }
 
     fun signInWithGoogle(account: GoogleSignInAccount) {
         viewModelScope.launch {
             _isLoading.value = true
+            _authState.value = AuthState.Unauthenticated // Reset l'état d'erreur précédent
+
             authRepository.signInWithGoogle(account)
                 .onSuccess { user ->
                     _authState.value = AuthState.Authenticated(user.uid)
+                    _isLoading.value = false
                 }
                 .onFailure { error ->
-                    _authState.value = AuthState.Error(
-                        error.localizedMessage ?: "Erreur de connexion Google"
-                    )
+                    val rawMessage = error.message ?: ""
+
+                    val errorMessage = when {
+                        rawMessage.contains("network", ignoreCase = true) ||
+                                rawMessage.contains("A network error", ignoreCase = true) ->
+                            "Network connection error"
+
+                        rawMessage.contains("cancelled", ignoreCase = true) ->
+                            "Google sign in cancelled"
+
+                        else -> "Unknown Google sign in error"
+                    }
+
+                    _authState.value = AuthState.Error(errorMessage)
+                    _isLoading.value = false
                 }
-            _isLoading.value = false
         }
     }
 
