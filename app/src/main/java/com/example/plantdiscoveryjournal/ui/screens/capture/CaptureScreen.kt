@@ -26,8 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import com.example.plantdiscoveryjournal.ui.components.ProcessingOverlay
-import com.example.plantdiscoveryjournal.ui.components.ErrorOverlay
+import com.example.plantdiscoveryjournal.ui.screens.components.ProcessingOverlay
+import com.example.plantdiscoveryjournal.ui.screens.components.ErrorOverlay
 import com.example.plantdiscoveryjournal.ui.theme.*
 import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureUiState
 import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureViewModel
@@ -60,7 +60,12 @@ fun CaptureScreen(
         if (success && photoUri != null) {
             try {
                 val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, photoUri!!))
+                    ImageDecoder.decodeBitmap(
+                        ImageDecoder.createSource(
+                            context.contentResolver,
+                            photoUri!!
+                        )
+                    )
                 } else {
                     @Suppress("DEPRECATION")
                     MediaStore.Images.Media.getBitmap(context.contentResolver, photoUri)
@@ -79,7 +84,12 @@ fun CaptureScreen(
         uri?.let {
             try {
                 val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, it))
+                    ImageDecoder.decodeBitmap(
+                        ImageDecoder.createSource(
+                            context.contentResolver,
+                            it
+                        )
+                    )
                 } else {
                     @Suppress("DEPRECATION")
                     MediaStore.Images.Media.getBitmap(context.contentResolver, it)
@@ -91,11 +101,19 @@ fun CaptureScreen(
         }
     }
 
-    // Gérer les états de succès
+    // Navigation sur succès / gestion annulation
     LaunchedEffect(uiState) {
-        if (uiState is CaptureUiState.Success) {
-            onNavigateToDetail((uiState as CaptureUiState.Success).discoveryId)
-            viewModel.resetState()
+        when (uiState) {
+            is CaptureUiState.Success -> {
+                onNavigateToDetail((uiState as CaptureUiState.Success).discoveryId)
+                viewModel.resetState()
+                capturedBitmap = null
+            }
+            is CaptureUiState.Cancelled -> {
+                viewModel.resetState()
+                capturedBitmap = null
+            }
+            else -> Unit
         }
     }
 
@@ -127,15 +145,36 @@ fun CaptureScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Contenu principal
             when (val state = uiState) {
                 is CaptureUiState.Processing -> {
-                    // Overlay de traitement avec image en arrière-plan
-                    ProcessingOverlay(
-                        bitmap = state.capturedImage,
-                        message = state.message,
-                        progress = state.progress
-                    )
+                    // Overlay de traitement + bouton Annuler
+                    Column(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        ProcessingOverlay(
+                            bitmap = state.capturedImage,
+                            message = state.message,
+                            progress = state.progress
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            OutlinedButton(
+                                onClick = { viewModel.cancelProcessing() },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Annuler")
+                            }
+                        }
+                    }
                 }
 
                 is CaptureUiState.Error -> {
@@ -156,7 +195,7 @@ fun CaptureScreen(
                 }
 
                 else -> {
-                    // Interface normale de capture
+                    // Interface normale (Idle + Cancelled après reset)
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -192,33 +231,44 @@ fun CaptureScreen(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Boutons
                         if (capturedBitmap != null) {
-                            // Boutons d'action après capture
+                            // Boutons après capture
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 OutlinedButton(
                                     onClick = { capturedBitmap = null },
-                                    modifier = Modifier.weight(1f).height(54.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(54.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(
                                         contentColor = TextBlack
                                     )
                                 ) {
-                                    Text("Cancel", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                                    Text(
+                                        "Cancel",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
                                 }
 
                                 Button(
                                     onClick = { viewModel.processImage(capturedBitmap!!) },
-                                    modifier = Modifier.weight(1f).height(54.dp),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(54.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = PrimaryGreen
                                     )
                                 ) {
-                                    Text("Identify", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Text(
+                                        "Identify",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                         } else {
@@ -230,7 +280,10 @@ fun CaptureScreen(
                                 Button(
                                     onClick = {
                                         if (cameraPermissionStatus.isGranted) {
-                                            val file = File(context.cacheDir, "photo_${System.currentTimeMillis()}.jpg")
+                                            val file = File(
+                                                context.cacheDir,
+                                                "photo_${System.currentTimeMillis()}.jpg"
+                                            )
                                             photoUri = FileProvider.getUriForFile(
                                                 context,
                                                 "${context.packageName}.fileprovider",

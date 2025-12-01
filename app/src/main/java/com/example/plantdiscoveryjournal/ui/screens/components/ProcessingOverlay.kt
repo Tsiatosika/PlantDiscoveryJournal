@@ -1,7 +1,12 @@
-package com.example.plantdiscoveryjournal.ui.components
+package com.example.plantdiscoveryjournal.ui.screens.components
 
 import android.graphics.Bitmap
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -9,7 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -45,120 +51,136 @@ fun ProcessingOverlay(
         label = "scale"
     )
 
+    // IMPORTANT : ne pas occuper tout l'écran, seulement la largeur + hauteur du contenu
     Box(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
     ) {
-        // Image de fond avec effet de flou
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = "Captured image",
+        Card(
             modifier = Modifier
-                .fillMaxSize()
-                .blur(15.dp),
-            contentScale = ContentScale.Crop
-        )
-
-        // Overlay sombre avec gradient
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.7f),
-                            Color.Black.copy(alpha = 0.85f)
-                        )
-                    )
-                )
-        )
-
-        // Contenu centré
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
         ) {
-            // Image capturée (preview)
-            Card(
-                modifier = Modifier
-                    .size(200.dp)
-                    .padding(bottom = 32.dp),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
+            Box {
+                // Image de fond floutée dans la carte
                 Image(
                     bitmap = bitmap.asImageBitmap(),
-                    contentDescription = "Preview",
-                    modifier = Modifier.fillMaxSize(),
+                    contentDescription = "Captured image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(320.dp)
+                        .blur(15.dp),
                     contentScale = ContentScale.Crop
                 )
-            }
 
-            // Indicateur de progression circulaire animé
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .padding(bottom = 24.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    progress = progress,
-                    modifier = Modifier.fillMaxSize(),
-                    color = PrimaryGreen,
-                    strokeWidth = 6.dp,
-                    trackColor = Color.White.copy(alpha = 0.3f)
+                // Overlay sombre avec gradient
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.7f),
+                                    Color.Black.copy(alpha = 0.85f)
+                                )
+                            )
+                        )
                 )
 
-                // Icône au centre (quand presque terminé)
-                if (progress > 0.7f) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = null,
+                // Contenu centré
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Image capturée (preview nette)
+                    Card(
                         modifier = Modifier
-                            .size(40.dp)
-                            .graphicsLayer {
-                                scaleX = scale
-                                scaleY = scale
-                            },
-                        tint = PrimaryGreen
+                            .size(200.dp)
+                            .padding(bottom = 32.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    ) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Preview",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+                    // Indicateur de progression circulaire animé
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .padding(bottom = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            progress = progress,
+                            modifier = Modifier.fillMaxSize(),
+                            color = PrimaryGreen,
+                            strokeWidth = 6.dp,
+                            trackColor = Color.White.copy(alpha = 0.3f)
+                        )
+
+                        // Icône au centre (quand presque terminé)
+                        if (progress > 0.7f) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .graphicsLayer {
+                                        scaleX = scale
+                                        scaleY = scale
+                                    },
+                                tint = PrimaryGreen
+                            )
+                        }
+                    }
+
+                    // Message de statut
+                    Text(
+                        text = message,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = BackgroundWhite,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    // Barre de progression linéaire
+                    LinearProgressIndicator(
+                        progress = progress,
+                        modifier = Modifier
+                            .width(200.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp)),
+                        color = PrimaryGreen,
+                        trackColor = Color.White.copy(alpha = 0.3f)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Pourcentage
+                    Text(
+                        text = "${(progress * 100).toInt()}%",
+                        fontSize = 14.sp,
+                        color = Color.White.copy(alpha = 0.7f)
                     )
                 }
             }
-
-            // Message de statut
-            Text(
-                text = message,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = BackgroundWhite,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-
-            // Barre de progression linéaire
-            LinearProgressIndicator(
-                progress = progress,
-                modifier = Modifier
-                    .width(200.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp)),
-                color = PrimaryGreen,
-                trackColor = Color.White.copy(alpha = 0.3f)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Pourcentage
-            Text(
-                text = "${(progress * 100).toInt()}%",
-                fontSize = 14.sp,
-                color = Color.White.copy(alpha = 0.7f)
-            )
         }
     }
 }
 
+// ErrorOverlay conservé tel quel
 @Composable
 fun ErrorOverlay(
     bitmap: Bitmap?,
@@ -180,13 +202,13 @@ fun ErrorOverlay(
                     .blur(10.dp),
                 contentScale = ContentScale.Crop
             )
-
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.6f))
-            )
         }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.6f))
+        )
 
         // Contenu de l'erreur
         Card(

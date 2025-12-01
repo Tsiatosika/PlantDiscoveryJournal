@@ -9,9 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel pour l'écran de capture
- */
+// ViewModel pour l’écran de capture
 class CaptureViewModel(
     private val repository: DiscoveryRepository,
     private val userId: String
@@ -23,32 +21,32 @@ class CaptureViewModel(
     fun processImage(bitmap: Bitmap) {
         viewModelScope.launch {
             try {
+                // 1) Sauvegarde de l’image
                 _uiState.value = CaptureUiState.Processing(
                     message = "Saving image...",
                     capturedImage = bitmap,
                     progress = 0.2f
                 )
 
-                // Sauvegarder l'image localement
                 val imagePath = repository.saveImageLocally(bitmap, userId)
 
+                // 2) Analyse IA
                 _uiState.value = CaptureUiState.Processing(
                     message = "Analyzing with AI...",
                     capturedImage = bitmap,
                     progress = 0.5f
                 )
 
-                // Identifier avec l'IA
                 val result = repository.identifyPlant(imagePath)
 
                 result.onSuccess { identification ->
+                    // 3) Sauvegarde de la découverte
                     _uiState.value = CaptureUiState.Processing(
                         message = "Saving discovery...",
                         capturedImage = bitmap,
                         progress = 0.8f
                     )
 
-                    // Sauvegarder dans la base de données
                     val discoveryId = repository.saveDiscovery(
                         userId = userId,
                         name = identification.name,
@@ -76,6 +74,11 @@ class CaptureViewModel(
     fun resetState() {
         _uiState.value = CaptureUiState.Idle
     }
+
+    // Annuler le traitement côté UI
+    fun cancelProcessing() {
+        _uiState.value = CaptureUiState.Cancelled
+    }
 }
 
 sealed class CaptureUiState {
@@ -93,4 +96,6 @@ sealed class CaptureUiState {
         val message: String,
         val capturedImage: Bitmap? = null
     ) : CaptureUiState()
+
+    object Cancelled : CaptureUiState()
 }
