@@ -15,7 +15,8 @@ data class Discovery(
     val imageLocalPath: String,
     val timestamp: Long,
     val location: String = "",
-    val notes: String = ""
+    val notes: String = "",
+    val category: String = "Plante"
 ) {
     fun getFormattedDate(): String {
         val date = Date(timestamp)

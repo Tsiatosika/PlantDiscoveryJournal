@@ -31,7 +31,8 @@ class DiscoveryRepository(
             name = this.name,
             aiFact = this.aiFact,
             imageLocalPath = this.imageLocalPath,
-            timestamp = this.timestamp
+            timestamp = this.timestamp,
+            category = this.category      // 👈 nouveau champ
         )
     }
 
@@ -52,34 +53,32 @@ class DiscoveryRepository(
     }
 
     // Sauvegarder une image localement
-    suspend fun saveImageLocally(bitmap: Bitmap, userId: String): String = withContext(Dispatchers.IO) {
-        val fileName = "discovery_${System.currentTimeMillis()}.jpg"
-        val directory = File(context.filesDir, "discoveries/$userId")
-        if (!directory.exists()) {
-            directory.mkdirs()
-        }
-        val file = File(directory, fileName)
+    suspend fun saveImageLocally(bitmap: Bitmap, userId: String): String =
+        withContext(Dispatchers.IO) {
+            val fileName = "discovery_${System.currentTimeMillis()}.jpg"
+            val directory = File(context.filesDir, "discoveries/$userId")
+            if (!directory.exists()) {
+                directory.mkdirs()
+            }
 
-        FileOutputStream(file).use { out ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
-        }
+            val file = File(directory, fileName)
+            FileOutputStream(file).use { out ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+            }
 
-        file.absolutePath
-    }
+            file.absolutePath
+        }
 
     // Identifier une plante avec l'IA Google Gemini
-    suspend fun identifyPlant(imagePath: String): Result<PlantIdentificationResult> = withContext(Dispatchers.IO) {
-        try {
-            // Charger l'image
-            val bitmap = BitmapFactory.decodeFile(imagePath)
-
-            // Appeler l'API Gemini
-            GeminiApiClient.identifyPlant(bitmap)
-
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend fun identifyPlant(imagePath: String): Result<PlantIdentificationResult> =
+        withContext(Dispatchers.IO) {
+            try {
+                val bitmap = BitmapFactory.decodeFile(imagePath)
+                GeminiApiClient.identifyPlant(bitmap)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
-    }
 
     // Sauvegarder une nouvelle découverte
     suspend fun saveDiscovery(
@@ -87,15 +86,18 @@ class DiscoveryRepository(
         name: String,
         fact: String,
         imagePath: String,
-        timestamp: Long
+        timestamp: Long,
+        category: String          // 👈 nouveau paramètre
     ): Long {
         val entity = DiscoveryEntity(
             userId = userId,
             name = name,
             aiFact = fact,
             imageLocalPath = imagePath,
-            timestamp = timestamp
+            timestamp = timestamp,
+            category = category     // 👈 stocké en base
         )
+
         return discoveryDao.insertDiscovery(entity)
     }
 }

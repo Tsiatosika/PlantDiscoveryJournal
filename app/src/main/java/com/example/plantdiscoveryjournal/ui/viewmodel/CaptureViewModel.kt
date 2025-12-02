@@ -18,10 +18,9 @@ class CaptureViewModel(
     private val _uiState = MutableStateFlow<CaptureUiState>(CaptureUiState.Idle)
     val uiState: StateFlow<CaptureUiState> = _uiState.asStateFlow()
 
-    fun processImage(bitmap: Bitmap) {
+    fun processImage(bitmap: Bitmap, category: String) {
         viewModelScope.launch {
             try {
-                // 1) Sauvegarde de l’image
                 _uiState.value = CaptureUiState.Processing(
                     message = "Saving image...",
                     capturedImage = bitmap,
@@ -30,7 +29,6 @@ class CaptureViewModel(
 
                 val imagePath = repository.saveImageLocally(bitmap, userId)
 
-                // 2) Analyse IA
                 _uiState.value = CaptureUiState.Processing(
                     message = "Analyzing with AI...",
                     capturedImage = bitmap,
@@ -40,7 +38,6 @@ class CaptureViewModel(
                 val result = repository.identifyPlant(imagePath)
 
                 result.onSuccess { identification ->
-                    // 3) Sauvegarde de la découverte
                     _uiState.value = CaptureUiState.Processing(
                         message = "Saving discovery...",
                         capturedImage = bitmap,
@@ -52,7 +49,8 @@ class CaptureViewModel(
                         name = identification.name,
                         fact = identification.fact,
                         imagePath = imagePath,
-                        timestamp = System.currentTimeMillis()
+                        timestamp = System.currentTimeMillis(),
+                        category = category
                     )
 
                     _uiState.value = CaptureUiState.Success(discoveryId)
@@ -75,7 +73,6 @@ class CaptureViewModel(
         _uiState.value = CaptureUiState.Idle
     }
 
-    // Annuler le traitement côté UI
     fun cancelProcessing() {
         _uiState.value = CaptureUiState.Cancelled
     }

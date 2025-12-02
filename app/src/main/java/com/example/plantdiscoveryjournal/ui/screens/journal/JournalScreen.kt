@@ -47,6 +47,7 @@ fun JournalScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchActive by viewModel.isSearchActive.collectAsState()
     val sortOption by viewModel.sortOption.collectAsState()
+    val categoryFilter by viewModel.categoryFilter.collectAsState()
 
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
@@ -124,7 +125,6 @@ fun JournalScreen(
                             )
                         }
 
-                        // Menu de tri
                         IconButton(onClick = { showSortMenu = true }) {
                             Icon(
                                 Icons.Default.Sort,
@@ -246,7 +246,7 @@ fun JournalScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
                         verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        // En-tête avec compteur
+                        // En‑tête : compteur + filtre par catégories
                         item {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -283,9 +283,28 @@ fun JournalScreen(
                                     }
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val categories = listOf("Toutes", "Fleur", "Arbre", "Insecte", "Autre")
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                categories.forEach { cat ->
+                                    FilterChip(
+                                        selected = (categoryFilter ?: "Toutes") == cat,
+                                        onClick = { viewModel.setCategoryFilter(cat) },
+                                        label = { Text(cat) }
+                                    )
+                                }
+                            }
                         }
 
-                        // Cartes
                         items(
                             items = discoveries,
                             key = { it.id }
@@ -296,15 +315,11 @@ fun JournalScreen(
                             )
                         }
 
-                        // Espace pour le FAB
-                        item {
-                            Spacer(modifier = Modifier.height(80.dp))
-                        }
+                        item { Spacer(modifier = Modifier.height(80.dp)) }
                     }
                 }
             }
 
-            // Snackbar d'erreur
             error?.let { errorMessage ->
                 Snackbar(
                     modifier = Modifier
@@ -321,7 +336,6 @@ fun JournalScreen(
                 }
             }
 
-            // Dialogue de déconnexion
             if (showSignOutDialog) {
                 AlertDialog(
                     onDismissRequest = { showSignOutDialog = false },
@@ -422,7 +436,6 @@ fun DiscoveryCard(
         colors = CardDefaults.cardColors(containerColor = BackgroundWhite)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // Image avec overlay gradient
             Box {
                 AsyncImage(
                     model = File(discovery.imageLocalPath),
@@ -492,6 +505,24 @@ fun DiscoveryCard(
                     fontWeight = FontWeight.Bold,
                     color = TextBlack
                 )
+
+                // Badge de catégorie
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = PrimaryGreen.copy(alpha = 0.1f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = discovery.category,
+                            fontSize = 11.sp,
+                            color = PrimaryGreen,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                }
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),

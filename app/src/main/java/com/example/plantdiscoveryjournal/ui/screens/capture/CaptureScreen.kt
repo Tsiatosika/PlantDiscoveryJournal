@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -48,6 +49,10 @@ fun CaptureScreen(
 
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Catégorie sélectionnée
+    var selectedCategory by remember { mutableStateOf("Plante") }
+    val categories = listOf("Fleur", "Arbre", "Insecte", "Autre")
 
     // Permission caméra
     val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
@@ -101,7 +106,7 @@ fun CaptureScreen(
         }
     }
 
-    // Navigation sur succès / gestion annulation
+    // Navigation sur succès / annulation
     LaunchedEffect(uiState) {
         when (uiState) {
             is CaptureUiState.Success -> {
@@ -129,7 +134,11 @@ fun CaptureScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TextBlack)
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = TextBlack
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -147,9 +156,12 @@ fun CaptureScreen(
         ) {
             when (val state = uiState) {
                 is CaptureUiState.Processing -> {
-                    // Overlay de traitement + bouton Annuler
                     Column(
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
                         ProcessingOverlay(
                             bitmap = state.capturedImage,
@@ -159,32 +171,24 @@ fun CaptureScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 24.dp),
-                            horizontalArrangement = Arrangement.End
+                        OutlinedButton(
+                            onClick = { viewModel.cancelProcessing() },
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            OutlinedButton(
-                                onClick = { viewModel.cancelProcessing() },
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(Icons.Default.Close, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Annuler")
-                            }
+                            Icon(Icons.Default.Close, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Annuler")
                         }
                     }
                 }
 
                 is CaptureUiState.Error -> {
-                    // Overlay d'erreur
                     ErrorOverlay(
                         bitmap = state.capturedImage,
                         message = state.message,
                         onRetry = {
                             state.capturedImage?.let { bitmap ->
-                                viewModel.processImage(bitmap)
+                                viewModel.processImage(bitmap, selectedCategory)
                             }
                         },
                         onCancel = {
@@ -232,13 +236,40 @@ fun CaptureScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         if (capturedBitmap != null) {
+                            // Sélecteur de catégorie
+                            Text(
+                                text = "Catégorie",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TextBlack
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                categories.forEach { cat ->
+                                    FilterChip(
+                                        selected = selectedCategory == cat,
+                                        onClick = { selectedCategory = cat },
+                                        label = { Text(cat) }
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
                             // Boutons après capture
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 OutlinedButton(
-                                    onClick = { capturedBitmap = null },
+                                    onClick = {
+                                        capturedBitmap = null
+                                        selectedCategory = "Plante"
+                                    },
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(54.dp),
@@ -255,7 +286,12 @@ fun CaptureScreen(
                                 }
 
                                 Button(
-                                    onClick = { viewModel.processImage(capturedBitmap!!) },
+                                    onClick = {
+                                        viewModel.processImage(
+                                            capturedBitmap!!,
+                                            selectedCategory
+                                        )
+                                    },
                                     modifier = Modifier
                                         .weight(1f)
                                         .height(54.dp),
