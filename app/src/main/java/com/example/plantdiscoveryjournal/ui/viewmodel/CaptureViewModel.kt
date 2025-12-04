@@ -21,6 +21,7 @@ class CaptureViewModel(
     fun processImage(bitmap: Bitmap, category: String) {
         viewModelScope.launch {
             try {
+                // 1) Sauvegarde de l’image
                 _uiState.value = CaptureUiState.Processing(
                     message = "Saving image...",
                     capturedImage = bitmap,
@@ -29,6 +30,7 @@ class CaptureViewModel(
 
                 val imagePath = repository.saveImageLocally(bitmap, userId)
 
+                // 2) Analyse IA
                 _uiState.value = CaptureUiState.Processing(
                     message = "Analyzing with AI...",
                     capturedImage = bitmap,
@@ -38,6 +40,16 @@ class CaptureViewModel(
                 val result = repository.identifyPlant(imagePath)
 
                 result.onSuccess { identification ->
+                    // ⚠️ Ne pas enregistrer si l’objet n’est pas une plante identifiable
+                    if (identification.name.contains("Objet non identifiable", ignoreCase = true)) {
+                        _uiState.value = CaptureUiState.Error(
+                            message = "Impossible d'identifier une plante sur cette image.",
+                            capturedImage = bitmap
+                        )
+                        return@onSuccess
+                    }
+
+                    // 3) Sauvegarde de la découverte
                     _uiState.value = CaptureUiState.Processing(
                         message = "Saving discovery...",
                         capturedImage = bitmap,

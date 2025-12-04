@@ -32,7 +32,21 @@ class DiscoveryRepository(
             aiFact = this.aiFact,
             imageLocalPath = this.imageLocalPath,
             timestamp = this.timestamp,
-            category = this.category      // 👈 nouveau champ
+            // location, notes restent les valeurs par défaut du data class
+            category = this.category
+        )
+    }
+
+    // Convertir Domain Model en Entity (pour update)
+    private fun Discovery.toEntity(): DiscoveryEntity {
+        return DiscoveryEntity(
+            id = this.id,
+            userId = this.userId,
+            name = this.name,
+            aiFact = this.aiFact,
+            imageLocalPath = this.imageLocalPath,
+            timestamp = this.timestamp,
+            category = this.category
         )
     }
 
@@ -50,6 +64,11 @@ class DiscoveryRepository(
     // Supprimer une découverte
     suspend fun deleteDiscovery(id: Long) {
         discoveryDao.deleteDiscoveryById(id)
+    }
+
+    // Mettre à jour une découverte (ici surtout la catégorie)
+    suspend fun updateDiscovery(discovery: Discovery) {
+        discoveryDao.updateDiscovery(discovery.toEntity())
     }
 
     // Sauvegarder une image localement
@@ -87,7 +106,7 @@ class DiscoveryRepository(
         fact: String,
         imagePath: String,
         timestamp: Long,
-        category: String          // 👈 nouveau paramètre
+        category: String
     ): Long {
         val entity = DiscoveryEntity(
             userId = userId,
@@ -95,7 +114,7 @@ class DiscoveryRepository(
             aiFact = fact,
             imageLocalPath = imagePath,
             timestamp = timestamp,
-            category = category     // 👈 stocké en base
+            category = category
         )
 
         return discoveryDao.insertDiscovery(entity)

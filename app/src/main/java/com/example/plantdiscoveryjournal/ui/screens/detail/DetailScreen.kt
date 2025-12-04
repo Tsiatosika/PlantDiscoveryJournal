@@ -1,7 +1,6 @@
 package com.example.plantdiscoveryjournal.ui.screens.detail
 
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -37,7 +35,6 @@ fun DetailScreen(
     val uiState by viewModel.uiState.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // Gérer l'état de suppression
     LaunchedEffect(uiState) {
         if (uiState is DetailUiState.Deleted) {
             Toast.makeText(context, "Découverte supprimée", Toast.LENGTH_SHORT).show()
@@ -95,13 +92,16 @@ fun DetailScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+
                 is DetailUiState.Success -> {
                     DiscoveryDetailContent(
                         discovery = state.discovery,
                         onDeleteClick = { showDeleteDialog = true },
+                        onUpdateCategory = { viewModel.updateCategory(it) },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
+
                 is DetailUiState.Error -> {
                     Column(
                         modifier = Modifier
@@ -123,80 +123,83 @@ fun DetailScreen(
                         )
                     }
                 }
-                is DetailUiState.Deleted -> {
-                    // Géré par LaunchedEffect
-                }
+
+                is DetailUiState.Deleted -> Unit
+            }
+
+            if (showDeleteDialog) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteDialog = false },
+                    icon = {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    title = {
+                        Text(
+                            "Supprimer cette découverte ?",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+                    },
+                    text = {
+                        Text(
+                            "Cette action est irréversible. La découverte sera définitivement supprimée de votre journal.",
+                            color = Color.Gray,
+                            fontSize = 14.sp,
+                            lineHeight = 20.sp
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                viewModel.deleteDiscovery()
+                                showDeleteDialog = false
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Supprimer", fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showDeleteDialog = false },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.Black
+                            )
+                        ) {
+                            Text("Annuler")
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp)
+                )
             }
         }
     }
-
-    // Dialogue de confirmation de suppression
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            icon = {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            },
-            title = {
-                Text(
-                    "Supprimer cette découverte ?",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp
-                )
-            },
-            text = {
-                Text(
-                    "Cette action est irréversible. La découverte sera définitivement supprimée de votre journal.",
-                    color = Color.Gray,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteDiscovery()
-                        showDeleteDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text("Supprimer", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showDeleteDialog = false },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = Color.Black
-                    )
-                ) {
-                    Text("Annuler")
-                }
-            },
-            shape = RoundedCornerShape(16.dp)
-        )
-    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiscoveryDetailContent(
     discovery: Discovery,
     onDeleteClick: () -> Unit,
+    onUpdateCategory: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var localCategory by remember(discovery.id) { mutableStateOf(discovery.category) }
+    val categories = listOf("Fleur", "Arbre", "Insecte", "Autre")
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
             .padding(bottom = 16.dp)
     ) {
-        // Image principale avec effet de carte
+        // Image principale
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -214,7 +217,7 @@ fun DiscoveryDetailContent(
             )
         }
 
-        // Contenu avec carte blanche
+        // Carte blanche
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -229,7 +232,7 @@ fun DiscoveryDetailContent(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Badge avec icône de plante
+                // Titre + logo
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -256,9 +259,27 @@ fun DiscoveryDetailContent(
                     )
                 }
 
+                // Badge catégorie (valeur actuelle)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = localCategory,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
+                }
+
                 Divider(color = Color.LightGray.copy(alpha = 0.5f))
 
-                // Date avec icône
+                // Date
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -276,7 +297,31 @@ fun DiscoveryDetailContent(
                     )
                 }
 
-                // Section "Le saviez-vous ?"
+                // Sélecteur de catégorie
+                Text(
+                    text = "Catégorie",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    categories.forEach { cat ->
+                        FilterChip(
+                            selected = localCategory == cat,
+                            onClick = {
+                                localCategory = cat
+                                onUpdateCategory(cat)
+                            },
+                            label = { Text(cat) }
+                        )
+                    }
+                }
+
+                // Section "Le Saviez-Vous ?"
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
@@ -318,7 +363,7 @@ fun DiscoveryDetailContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Bouton de suppression
+        // Bouton suppression
         Button(
             onClick = onDeleteClick,
             modifier = Modifier

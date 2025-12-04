@@ -53,6 +53,23 @@ class DetailViewModel(
             }
         }
     }
+
+    fun updateCategory(newCategory: String) {
+        val current = _uiState.value
+        if (current is DetailUiState.Success) {
+            val updated = current.discovery.copy(category = newCategory)
+            viewModelScope.launch {
+                try {
+                    repository.updateDiscovery(updated)
+                    _uiState.value = DetailUiState.Success(updated)
+                } catch (e: Exception) {
+                    _uiState.value = DetailUiState.Error(
+                        e.localizedMessage ?: "Erreur de mise à jour de la catégorie"
+                    )
+                }
+            }
+        }
+    }
 }
 
 sealed class DetailUiState {
