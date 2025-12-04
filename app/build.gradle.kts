@@ -9,7 +9,6 @@ android {
     namespace = "com.example.plantdiscoveryjournal"
     compileSdk = 34
 
-    // Support pour 16KB page size (Android 15+)
     ndkVersion = "26.1.10909125"
 
     defaultConfig {
@@ -64,8 +63,6 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
-
-        // Optimisation pour 16KB page size
         jniLibs {
             useLegacyPackaging = false
         }
@@ -90,7 +87,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.2")
 
-    // Room Database
+    // Room Database – une seule version cohérente
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
@@ -122,7 +119,7 @@ dependencies {
     // Gson
     implementation("com.google.code.gson:gson:2.10.1")
 
-    // Google Gemini AI (Version mise à jour)
+    // Google Gemini AI
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
     // Coroutines
@@ -137,4 +134,8 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+kapt {
+    correctErrorTypes = true
 }

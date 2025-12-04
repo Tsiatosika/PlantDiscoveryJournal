@@ -13,11 +13,13 @@ import com.example.plantdiscoveryjournal.ui.screens.auth.SignUpScreen
 import com.example.plantdiscoveryjournal.ui.screens.capture.CaptureScreen
 import com.example.plantdiscoveryjournal.ui.screens.detail.DetailScreen
 import com.example.plantdiscoveryjournal.ui.screens.journal.JournalScreen
-import com.example.plantdiscoveryjournal.ui.viewmodel.*
+import com.example.plantdiscoveryjournal.ui.viewmodel.AuthState
+import com.example.plantdiscoveryjournal.ui.viewmodel.AuthViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.DetailViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.JournalViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.ThemeViewModel
 
-/**
- * Définitions des routes de navigation
- */
 sealed class Screen(val route: String) {
     object Login : Screen("login")
     object SignUp : Screen("signup")
@@ -32,13 +34,13 @@ sealed class Screen(val route: String) {
 fun AppNavGraph(
     navController: NavHostController,
     authViewModel: AuthViewModel,
+    themeViewModel: ThemeViewModel,
     getJournalViewModel: (String) -> JournalViewModel,
     getCaptureViewModel: (String) -> CaptureViewModel,
     getDetailViewModel: (Long) -> DetailViewModel
 ) {
     val authState by authViewModel.authState.collectAsState()
 
-    // Déterminer le point de départ
     val startDestination = when (authState) {
         is AuthState.Authenticated -> Screen.Journal.route
         else -> Screen.Login.route
@@ -48,7 +50,6 @@ fun AppNavGraph(
         navController = navController,
         startDestination = startDestination
     ) {
-        // Écran de connexion
         composable(Screen.Login.route) {
             LoginScreen(
                 viewModel = authViewModel,
@@ -63,7 +64,6 @@ fun AppNavGraph(
             )
         }
 
-        // Écran d'inscription
         composable(Screen.SignUp.route) {
             SignUpScreen(
                 viewModel = authViewModel,
@@ -78,7 +78,6 @@ fun AppNavGraph(
             )
         }
 
-        // Écran liste du journal
         composable(Screen.Journal.route) {
             val userId = (authState as? AuthState.Authenticated)?.userId ?: return@composable
             val viewModel = getJournalViewModel(userId)
@@ -96,11 +95,11 @@ fun AppNavGraph(
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                }
+                },
+                themeViewModel = themeViewModel
             )
         }
 
-        // Écran de capture
         composable(Screen.Capture.route) {
             val userId = (authState as? AuthState.Authenticated)?.userId ?: return@composable
             val viewModel = getCaptureViewModel(userId)
@@ -118,7 +117,6 @@ fun AppNavGraph(
             )
         }
 
-        // Écran détail de découverte
         composable(
             route = Screen.Detail.route,
             arguments = listOf(

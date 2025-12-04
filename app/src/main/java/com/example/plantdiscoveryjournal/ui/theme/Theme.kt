@@ -1,56 +1,42 @@
 package com.example.plantdiscoveryjournal.ui.theme
 
-import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 
+
+// Palette claire
 private val LightColorScheme = lightColorScheme(
     primary = PrimaryGreen,
     onPrimary = BackgroundWhite,
-    primaryContainer = PrimaryGreenLight,
-    onPrimaryContainer = TextBlack,
-    secondary = PrimaryGreen,
-    onSecondary = BackgroundWhite,
-    secondaryContainer = BackgroundGray,
-    onSecondaryContainer = TextBlack,
-    tertiary = PrimaryGreen,
-    onTertiary = BackgroundWhite,
-    background = BackgroundWhite,
-    onBackground = TextBlack,
+    background = BackgroundGray,
     surface = BackgroundWhite,
-    onSurface = TextBlack,
-    surfaceVariant = BackgroundGray,
-    onSurfaceVariant = TextGray,
-    error = ErrorRed,
-    onError = BackgroundWhite,
-    outline = BorderGray
+    onBackground = TextBlack,
+    onSurface = TextBlack
+)
+
+// Palette sombre
+private val DarkColorScheme = darkColorScheme(
+    primary = PrimaryGreen,
+    onPrimary = Color.White,
+    background = Color(0xFF101010),
+    surface = Color(0xFF181818),
+    onBackground = Color(0xFFECECEC),
+    onSurface = Color(0xFFECECEC)
 )
 
 @Composable
-fun PlantDiscoveryTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+fun PlantDiscoveryJournalTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(), // suit le thème système
     content: @Composable () -> Unit
 ) {
-    val colorScheme = LightColorScheme
-
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
-        }
-    }
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
         content = content
     )
 }

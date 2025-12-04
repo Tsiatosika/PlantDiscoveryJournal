@@ -1,6 +1,5 @@
 package com.example.plantdiscoveryjournal.ui.screens.journal
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,17 +20,20 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.fontResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.plantdiscoveryjournal.R
 import com.example.plantdiscoveryjournal.domain.model.Discovery
-import com.example.plantdiscoveryjournal.ui.theme.*
+import com.example.plantdiscoveryjournal.ui.theme.PrimaryGreen
+import com.example.plantdiscoveryjournal.ui.theme.TextGray
 import com.example.plantdiscoveryjournal.ui.viewmodel.JournalSortOption
 import com.example.plantdiscoveryjournal.ui.viewmodel.JournalViewModel
+import com.example.plantdiscoveryjournal.ui.viewmodel.ThemeViewModel
 import java.io.File
-import com.example.plantdiscoveryjournal.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +41,8 @@ fun JournalScreen(
     viewModel: JournalViewModel,
     onNavigateToCapture: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
-    onSignOut: () -> Unit
+    onSignOut: () -> Unit,
+    themeViewModel: ThemeViewModel
 ) {
     val discoveries by viewModel.discoveries.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -49,8 +52,12 @@ fun JournalScreen(
     val sortOption by viewModel.sortOption.collectAsState()
     val categoryFilter by viewModel.categoryFilter.collectAsState()
 
+    val isDark by themeViewModel.isDarkTheme.collectAsState()
+    val colorScheme = MaterialTheme.colorScheme
+
     var showSignOutDialog by remember { mutableStateOf(false) }
     var showSortMenu by remember { mutableStateOf(false) }
+
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(isSearchActive) {
@@ -72,125 +79,162 @@ fun JournalScreen(
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester),
                             colors = TextFieldDefaults.colors(
-                                focusedContainerColor = BackgroundWhite,
-                                unfocusedContainerColor = BackgroundWhite,
+                                focusedContainerColor = colorScheme.surface,
+                                unfocusedContainerColor = colorScheme.surface,
                                 focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
+                                unfocusedIndicatorColor = Color.Transparent,
+                                cursorColor = colorScheme.primary
                             ),
                             singleLine = true,
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.Search,
                                     contentDescription = null,
-                                    tint = PrimaryGreen
+                                    tint = colorScheme.primary
                                 )
                             }
                         )
                     } else {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.logo),
-                                contentDescription = null,
-                                tint = PrimaryGreen,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Text(
-                                text = "Mes Découvertes",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = TextBlack
-                            )
+                            Surface(
+                                shape = CircleShape,
+                                color = colorScheme.primary.copy(alpha = 0.08f)
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.logo),
+                                    contentDescription = null,
+                                    tint = colorScheme.primary,
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .padding(6.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Mes",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colorScheme.onSurface,
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = "découvertes",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
+                                )
+                            }
                         }
                     }
                 },
                 actions = {
-                    if (isSearchActive) {
-                        IconButton(onClick = { viewModel.clearSearch() }) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        IconButton(onClick = { themeViewModel.toggleTheme() }) {
                             Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Fermer la recherche",
-                                tint = TextBlack
-                            )
-                        }
-                    } else {
-                        IconButton(onClick = { viewModel.toggleSearch() }) {
-                            Icon(
-                                Icons.Default.Search,
-                                contentDescription = "Rechercher",
-                                tint = PrimaryGreen,
-                                modifier = Modifier.size(24.dp)
+                                imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
+                                contentDescription = "Changer de thème",
+                                tint = colorScheme.primary
                             )
                         }
 
-                        IconButton(onClick = { showSortMenu = true }) {
-                            Icon(
-                                Icons.Default.Sort,
-                                contentDescription = "Trier",
-                                tint = PrimaryGreen,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
+                        if (isSearchActive) {
+                            IconButton(onClick = { viewModel.clearSearch() }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Fermer la recherche",
+                                    tint = colorScheme.onSurface
+                                )
+                            }
+                        } else {
+                            IconButton(onClick = { viewModel.toggleSearch() }) {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = "Rechercher",
+                                    tint = colorScheme.primary
+                                )
+                            }
 
-                        DropdownMenu(
-                            expanded = showSortMenu,
-                            onDismissRequest = { showSortMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        "Plus récentes",
-                                        fontWeight = if (sortOption == JournalSortOption.MOST_RECENT)
-                                            FontWeight.SemiBold else FontWeight.Normal
-                                    )
-                                },
-                                onClick = {
-                                    viewModel.setSortOption(JournalSortOption.MOST_RECENT)
-                                    showSortMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        "A → Z",
-                                        fontWeight = if (sortOption == JournalSortOption.NAME_ASC)
-                                            FontWeight.SemiBold else FontWeight.Normal
-                                    )
-                                },
-                                onClick = {
-                                    viewModel.setSortOption(JournalSortOption.NAME_ASC)
-                                    showSortMenu = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = {
-                                    Text(
-                                        "Z → A",
-                                        fontWeight = if (sortOption == JournalSortOption.NAME_DESC)
-                                            FontWeight.SemiBold else FontWeight.Normal
-                                    )
-                                },
-                                onClick = {
-                                    viewModel.setSortOption(JournalSortOption.NAME_DESC)
-                                    showSortMenu = false
-                                }
-                            )
-                        }
+                            IconButton(onClick = { showSortMenu = true }) {
+                                Icon(
+                                    Icons.Default.Sort,
+                                    contentDescription = "Trier",
+                                    tint = colorScheme.primary
+                                )
+                            }
 
-                        IconButton(onClick = { showSignOutDialog = true }) {
-                            Icon(
-                                Icons.Default.ExitToApp,
-                                contentDescription = "Déconnexion",
-                                tint = TextGray
-                            )
+                            IconButton(onClick = { showSignOutDialog = true }) {
+                                Icon(
+                                    Icons.Default.ExitToApp,
+                                    contentDescription = "Déconnexion",
+                                    tint = TextGray
+                                )
+                            }
                         }
+                    }
+
+                    DropdownMenu(
+                        expanded = showSortMenu,
+                        onDismissRequest = { showSortMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "Plus récentes",
+                                    fontWeight =
+                                        if (sortOption == JournalSortOption.MOST_RECENT)
+                                            FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            },
+                            onClick = {
+                                viewModel.setSortOption(JournalSortOption.MOST_RECENT)
+                                showSortMenu = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "A → Z",
+                                    fontWeight =
+                                        if (sortOption == JournalSortOption.NAME_ASC)
+                                            FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            },
+                            onClick = {
+                                viewModel.setSortOption(JournalSortOption.NAME_ASC)
+                                showSortMenu = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "Z → A",
+                                    fontWeight =
+                                        if (sortOption == JournalSortOption.NAME_DESC)
+                                            FontWeight.SemiBold else FontWeight.Normal
+                                )
+                            },
+                            onClick = {
+                                viewModel.setSortOption(JournalSortOption.NAME_DESC)
+                                showSortMenu = false
+                            }
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundWhite,
-                    titleContentColor = TextBlack
+                    containerColor = colorScheme.surface,
+                    titleContentColor = colorScheme.onSurface
                 ),
                 modifier = Modifier.shadow(2.dp)
             )
@@ -207,12 +251,12 @@ fun JournalScreen(
                 Icon(
                     Icons.Default.Add,
                     contentDescription = "Nouvelle découverte",
-                    tint = BackgroundWhite,
+                    tint = Color.White,
                     modifier = Modifier.size(28.dp)
                 )
             }
         },
-        containerColor = BackgroundGray
+        containerColor = colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -230,13 +274,9 @@ fun JournalScreen(
 
                 discoveries.isEmpty() -> {
                     if (isSearchActive && searchQuery.isNotBlank()) {
-                        NoResultsView(
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                        NoResultsView(modifier = Modifier.align(Alignment.Center))
                     } else {
-                        EmptyStateView(
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                        EmptyStateView(modifier = Modifier.align(Alignment.Center))
                     }
                 }
 
@@ -246,7 +286,6 @@ fun JournalScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 20.dp),
                         verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        // En‑tête : compteur + filtre par catégories
                         item {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -259,6 +298,7 @@ fun JournalScreen(
                                     fontWeight = FontWeight.SemiBold,
                                     color = TextGray
                                 )
+
                                 Surface(
                                     color = PrimaryGreen.copy(alpha = 0.1f),
                                     shape = RoundedCornerShape(20.dp)
@@ -328,11 +368,11 @@ fun JournalScreen(
                     containerColor = MaterialTheme.colorScheme.error,
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
-                            Text("OK", color = BackgroundWhite)
+                            Text("OK", color = Color.White)
                         }
                     }
                 ) {
-                    Text(errorMessage, color = BackgroundWhite)
+                    Text(errorMessage, color = Color.White)
                 }
             }
 
@@ -341,7 +381,7 @@ fun JournalScreen(
                     onDismissRequest = { showSignOutDialog = false },
                     icon = {
                         Icon(
-                            painter = painterResource(id = R.drawable.logo),
+                            painter = painterResource(R.drawable.logo),
                             contentDescription = null,
                             tint = PrimaryGreen,
                             modifier = Modifier.size(40.dp)
@@ -369,7 +409,7 @@ fun JournalScreen(
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = PrimaryGreen,
-                                contentColor = BackgroundWhite
+                                contentColor = Color.White
                             ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
@@ -399,7 +439,7 @@ fun JournalScreen(
                         OutlinedButton(
                             onClick = { showSignOutDialog = false },
                             colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = TextBlack
+                                contentColor = colorScheme.onSurface
                             ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
@@ -414,7 +454,7 @@ fun JournalScreen(
                         }
                     },
                     shape = RoundedCornerShape(16.dp),
-                    containerColor = BackgroundWhite
+                    containerColor = colorScheme.surface
                 )
             }
         }
@@ -426,6 +466,8 @@ fun DiscoveryCard(
     discovery: Discovery,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -433,9 +475,11 @@ fun DiscoveryCard(
             .shadow(4.dp, RoundedCornerShape(16.dp)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BackgroundWhite)
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
     ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Box {
                 AsyncImage(
                     model = File(discovery.imageLocalPath),
@@ -480,14 +524,14 @@ fun DiscoveryCard(
                         Icon(
                             painter = painterResource(id = R.drawable.logo),
                             contentDescription = null,
-                            tint = BackgroundWhite,
+                            tint = Color.White,
                             modifier = Modifier.size(12.dp)
                         )
                         Text(
-                            text = "Identifié",
+                            text = "Identifiée",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = BackgroundWhite
+                            color = Color.White
                         )
                     }
                 }
@@ -503,10 +547,9 @@ fun DiscoveryCard(
                     text = discovery.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextBlack
+                    color = colorScheme.onSurface
                 )
 
-                // Badge de catégorie
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -544,7 +587,7 @@ fun DiscoveryCard(
 
                 Divider(
                     modifier = Modifier.padding(vertical = 4.dp),
-                    color = BackgroundGray,
+                    color = colorScheme.outline.copy(alpha = 0.2f),
                     thickness = 1.dp
                 )
 
@@ -573,6 +616,8 @@ fun DiscoveryCard(
 
 @Composable
 fun EmptyStateView(modifier: Modifier = Modifier) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Column(
         modifier = modifier.padding(40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -599,7 +644,7 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
             text = "Aucune découverte",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = TextBlack
+            color = colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -611,37 +656,13 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             lineHeight = 22.sp
         )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Surface(
-            color = PrimaryGreen.copy(alpha = 0.1f),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = null,
-                    tint = PrimaryGreen,
-                    modifier = Modifier.size(20.dp)
-                )
-                Text(
-                    text = "Appuyez sur + pour commencer",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = PrimaryGreen
-                )
-            }
-        }
     }
 }
 
 @Composable
 fun NoResultsView(modifier: Modifier = Modifier) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Column(
         modifier = modifier.padding(40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -668,7 +689,7 @@ fun NoResultsView(modifier: Modifier = Modifier) {
             text = "Aucun résultat",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = TextBlack
+            color = colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(10.dp))

@@ -12,16 +12,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-// Options de tri pour le journal
 enum class JournalSortOption {
     MOST_RECENT,
     NAME_ASC,
     NAME_DESC
 }
 
-/**
- * ViewModel pour l'écran liste du journal
- */
 class JournalViewModel(
     private val repository: DiscoveryRepository,
     private val userId: String
@@ -36,7 +32,6 @@ class JournalViewModel(
     private val _sortOption = MutableStateFlow(JournalSortOption.MOST_RECENT)
     val sortOption: StateFlow<JournalSortOption> = _sortOption.asStateFlow()
 
-    // Filtre de catégorie : "Toutes", "Fleur", "Arbre", "Insecte", "Autre"
     private val _categoryFilter = MutableStateFlow<String?>("Toutes")
     val categoryFilter: StateFlow<String?> = _categoryFilter.asStateFlow()
 
@@ -48,14 +43,12 @@ class JournalViewModel(
             initialValue = emptyList()
         )
 
-    // Découvertes filtrées par recherche + catégorie, puis triées
     val discoveries: StateFlow<List<Discovery>> = combine(
         allDiscoveries,
         _searchQuery,
         _sortOption,
         _categoryFilter
     ) { discoveries, query, sort, category ->
-        // 1) filtre texte
         val textFiltered = if (query.isBlank()) {
             discoveries
         } else {
@@ -67,13 +60,11 @@ class JournalViewModel(
             }
         }
 
-        // 2) filtre catégorie
         val categoryFiltered = when (category) {
             null, "Toutes" -> textFiltered
             else -> textFiltered.filter { it.category.equals(category, ignoreCase = true) }
         }
 
-        // 3) tri
         when (sort) {
             JournalSortOption.MOST_RECENT ->
                 categoryFiltered.sortedByDescending { it.timestamp }
