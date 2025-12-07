@@ -1,5 +1,7 @@
 package com.example.plantdiscoveryjournal.ui.screens.detail
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.example.plantdiscoveryjournal.R
 import com.example.plantdiscoveryjournal.domain.model.Discovery
@@ -29,7 +32,8 @@ import java.io.File
 @Composable
 fun DetailScreen(
     viewModel: DetailViewModel,
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    textSize: String
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
@@ -49,7 +53,8 @@ fun DetailScreen(
                     Text(
                         "Détails de la Découverte",
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
@@ -57,28 +62,79 @@ fun DetailScreen(
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Retour",
-                            tint = Color.Black
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 actions = {
-                    if (uiState is DetailUiState.Success) {
+                    val currentState = uiState
+                    if (currentState is DetailUiState.Success) {
+                        val discovery = currentState.discovery
+                        val shareText =
+                            "Plante : ${discovery.name}\n\n" +
+                                    "Découverte le ${discovery.getFormattedDate()}\n\n" +
+                                    "Le saviez-vous ? ${discovery.aiFact}"
+
+                        IconButton(onClick = {
+                            try {
+                                val imageFile = File(discovery.imageLocalPath)
+                                if (!imageFile.exists()) {
+                                    Toast.makeText(
+                                        context,
+                                        "Image introuvable",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    return@IconButton
+                                }
+
+                                val uri: Uri = FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    imageFile
+                                )
+
+                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "image/*"
+                                    putExtra(Intent.EXTRA_STREAM, uri)
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                    putExtra(Intent.EXTRA_SUBJECT, "Découverte botanique")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                }
+
+                                val shareIntent =
+                                    Intent.createChooser(sendIntent, "Partager la plante")
+                                context.startActivity(shareIntent)
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    context,
+                                    "Erreur de partage",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = "Partager",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(
                                 Icons.Default.Delete,
                                 contentDescription = "Supprimer",
-                                tint = Color.Black
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color.Black
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = Color(0xFFF5F5F5)
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -98,6 +154,7 @@ fun DetailScreen(
                         discovery = state.discovery,
                         onDeleteClick = { showDeleteDialog = true },
                         onUpdateCategory = { viewModel.updateCategory(it) },
+                        textSize = textSize,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -141,7 +198,8 @@ fun DetailScreen(
                         Text(
                             "Supprimer cette découverte ?",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     },
                     text = {
@@ -170,7 +228,7 @@ fun DetailScreen(
                         TextButton(
                             onClick = { showDeleteDialog = false },
                             colors = ButtonDefaults.textButtonColors(
-                                contentColor = Color.Black
+                                contentColor = MaterialTheme.colorScheme.onSurface
                             )
                         ) {
                             Text("Annuler")
@@ -189,17 +247,33 @@ fun DiscoveryDetailContent(
     discovery: Discovery,
     onDeleteClick: () -> Unit,
     onUpdateCategory: (String) -> Unit,
+    textSize: String,
     modifier: Modifier = Modifier
 ) {
     var localCategory by remember(discovery.id) { mutableStateOf(discovery.category) }
     val categories = listOf("Fleur", "Arbre", "Insecte", "Autre")
+
+    val titleSize = when (textSize) {
+        "Petit" -> 20.sp
+        "Grand" -> 26.sp
+        else -> 24.sp
+    }
+    val sectionTitleSize = when (textSize) {
+        "Petit" -> 13.sp
+        "Grand" -> 15.sp
+        else -> 14.sp
+    }
+    val bodySize = when (textSize) {
+        "Petit" -> 13.sp
+        "Grand" -> 15.sp
+        else -> 14.sp
+    }
 
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
             .padding(bottom = 16.dp)
     ) {
-        // Image principale
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -217,13 +291,12 @@ fun DiscoveryDetailContent(
             )
         }
 
-        // Carte blanche
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
@@ -232,7 +305,6 @@ fun DiscoveryDetailContent(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Titre + logo
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -250,16 +322,14 @@ fun DiscoveryDetailContent(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
-
                     Text(
                         text = discovery.name,
-                        fontSize = 24.sp,
+                        fontSize = titleSize,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
-                // Badge catégorie (valeur actuelle)
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -279,7 +349,6 @@ fun DiscoveryDetailContent(
 
                 Divider(color = Color.LightGray.copy(alpha = 0.5f))
 
-                // Date
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -292,19 +361,20 @@ fun DiscoveryDetailContent(
                     )
                     Text(
                         text = "Découvert le ${discovery.getFormattedDate()}",
-                        fontSize = 13.sp,
+                        fontSize = bodySize,
                         color = Color.Gray
                     )
                 }
 
-                // Sélecteur de catégorie
                 Text(
                     text = "Catégorie",
-                    fontSize = 14.sp,
+                    fontSize = sectionTitleSize,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
+
                 Spacer(Modifier.height(8.dp))
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -316,12 +386,11 @@ fun DiscoveryDetailContent(
                                 localCategory = cat
                                 onUpdateCategory(cat)
                             },
-                            label = { Text(cat) }
+                            label = { Text(cat, fontSize = bodySize) }
                         )
                     }
                 }
 
-                // Section "Le Saviez-Vous ?"
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
@@ -342,7 +411,7 @@ fun DiscoveryDetailContent(
                             )
                             Text(
                                 text = "Le Saviez-Vous ?",
-                                fontSize = 14.sp,
+                                fontSize = sectionTitleSize,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -352,40 +421,39 @@ fun DiscoveryDetailContent(
 
                         Text(
                             text = discovery.aiFact,
-                            fontSize = 14.sp,
+                            fontSize = bodySize,
                             color = Color(0xFF424242),
                             lineHeight = 22.sp
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = onDeleteClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .height(54.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Supprimer cette découverte",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Bouton suppression
-        Button(
-            onClick = onDeleteClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .height(54.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                "Supprimer cette découverte",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
         }
     }
 }

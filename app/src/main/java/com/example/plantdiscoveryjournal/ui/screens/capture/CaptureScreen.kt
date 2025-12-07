@@ -19,7 +19,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -29,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import com.example.plantdiscoveryjournal.ui.screens.components.ProcessingOverlay
 import com.example.plantdiscoveryjournal.ui.screens.components.ErrorOverlay
-import com.example.plantdiscoveryjournal.ui.theme.*
 import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureUiState
 import com.example.plantdiscoveryjournal.ui.viewmodel.CaptureViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -50,15 +48,12 @@ fun CaptureScreen(
     var capturedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Catégorie sélectionnée
     var selectedCategory by remember { mutableStateOf("Plante") }
     val categories = listOf("Fleur", "Arbre", "Insecte", "Autre")
 
-    // Permission caméra
     val cameraPermission = rememberPermissionState(Manifest.permission.CAMERA)
     val cameraPermissionStatus = cameraPermission.status
 
-    // Launcher pour la caméra
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
@@ -82,7 +77,6 @@ fun CaptureScreen(
         }
     }
 
-    // Launcher pour la galerie
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -106,7 +100,6 @@ fun CaptureScreen(
         }
     }
 
-    // Navigation sur succès / annulation
     LaunchedEffect(uiState) {
         when (uiState) {
             is CaptureUiState.Success -> {
@@ -129,7 +122,8 @@ fun CaptureScreen(
                     Text(
                         "New Discovery",
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 },
                 navigationIcon = {
@@ -137,17 +131,17 @@ fun CaptureScreen(
                         Icon(
                             Icons.Default.ArrowBack,
                             contentDescription = "Back",
-                            tint = TextBlack
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = BackgroundWhite,
-                    titleContentColor = TextBlack
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
         },
-        containerColor = BackgroundWhite
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -159,7 +153,7 @@ fun CaptureScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.5f)),
+                            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f)),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -173,7 +167,10 @@ fun CaptureScreen(
 
                         OutlinedButton(
                             onClick = { viewModel.cancelProcessing() },
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.onBackground
+                            )
                         ) {
                             Icon(Icons.Default.Close, contentDescription = null)
                             Spacer(modifier = Modifier.width(8.dp))
@@ -199,19 +196,20 @@ fun CaptureScreen(
                 }
 
                 else -> {
-                    // Interface normale (Idle + Cancelled après reset)
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(horizontal = 24.dp, vertical = 20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Zone de prévisualisation
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
-                                .background(BackgroundLightGray, RoundedCornerShape(16.dp)),
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    RoundedCornerShape(16.dp)
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             if (capturedBitmap != null) {
@@ -227,7 +225,7 @@ fun CaptureScreen(
                                 Text(
                                     text = "Image Preview",
                                     fontSize = 16.sp,
-                                    color = TextLightGray,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                                     fontWeight = FontWeight.Normal
                                 )
                             }
@@ -236,12 +234,11 @@ fun CaptureScreen(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         if (capturedBitmap != null) {
-                            // Sélecteur de catégorie
                             Text(
                                 text = "Catégorie",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = TextBlack
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                             Spacer(modifier = Modifier.height(8.dp))
 
@@ -260,7 +257,6 @@ fun CaptureScreen(
 
                             Spacer(modifier = Modifier.height(16.dp))
 
-                            // Boutons après capture
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -275,7 +271,7 @@ fun CaptureScreen(
                                         .height(54.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = TextBlack
+                                        contentColor = MaterialTheme.colorScheme.onBackground
                                     )
                                 ) {
                                     Text(
@@ -297,18 +293,18 @@ fun CaptureScreen(
                                         .height(54.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = PrimaryGreen
+                                        containerColor = MaterialTheme.colorScheme.primary
                                     )
                                 ) {
                                     Text(
                                         "Identify",
                                         fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
                             }
                         } else {
-                            // Boutons de capture/sélection
                             Column(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -335,7 +331,7 @@ fun CaptureScreen(
                                         .height(54.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = PrimaryGreen
+                                        containerColor = MaterialTheme.colorScheme.primary
                                     )
                                 ) {
                                     Icon(
@@ -347,7 +343,8 @@ fun CaptureScreen(
                                     Text(
                                         "Capture Photo",
                                         fontSize = 16.sp,
-                                        fontWeight = FontWeight.SemiBold
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = MaterialTheme.colorScheme.onPrimary
                                     )
                                 }
 
@@ -358,7 +355,7 @@ fun CaptureScreen(
                                         .height(54.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.outlinedButtonColors(
-                                        contentColor = TextBlack
+                                        contentColor = MaterialTheme.colorScheme.onBackground
                                     )
                                 ) {
                                     Icon(

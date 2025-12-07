@@ -12,12 +12,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+// Options de tri pour le journal
 enum class JournalSortOption {
-    MOST_RECENT,
+    DATE_DESC,   // plus récent d'abord
+    DATE_ASC,
     NAME_ASC,
     NAME_DESC
 }
 
+/**
+ * ViewModel pour l'écran liste du journal
+ */
 class JournalViewModel(
     private val repository: DiscoveryRepository,
     private val userId: String
@@ -29,11 +34,9 @@ class JournalViewModel(
     private val _isSearchActive = MutableStateFlow(false)
     val isSearchActive: StateFlow<Boolean> = _isSearchActive.asStateFlow()
 
-    private val _sortOption = MutableStateFlow(JournalSortOption.MOST_RECENT)
+    // Option de tri
+    private val _sortOption = MutableStateFlow(JournalSortOption.DATE_DESC)
     val sortOption: StateFlow<JournalSortOption> = _sortOption.asStateFlow()
-
-    private val _categoryFilter = MutableStateFlow<String?>("Toutes")
-    val categoryFilter: StateFlow<String?> = _categoryFilter.asStateFlow()
 
     private val allDiscoveries = repository
         .getAllDiscoveriesByUser(userId)
@@ -46,34 +49,24 @@ class JournalViewModel(
     val discoveries: StateFlow<List<Discovery>> = combine(
         allDiscoveries,
         _searchQuery,
-        _sortOption,
-        _categoryFilter
-    ) { discoveries, query, sort, category ->
-        val textFiltered = if (query.isBlank()) {
+        _sortOption
+    ) { discoveries, query, sort ->
+        val filtered = if (query.isBlank()) {
             discoveries
         } else {
             discoveries.filter { discovery ->
-                discovery.name.contains(query, ignoreCase = true) ||
-                        discovery.location.contains(query, ignoreCase = true) ||
-                        discovery.notes.contains(query, ignoreCase = true) ||
-                        discovery.category.contains(query, ignoreCase = true)
+                discovery.name.contains(query, ignoreCase = true)
+                // si tu ajoutes location/notes dans Discovery, tu pourras filtrer aussi dessus
+                // || discovery.location.contains(query, ignoreCase = true)
+                // || discovery.notes.contains(query, ignoreCase = true)
             }
         }
 
-        val categoryFiltered = when (category) {
-            null, "Toutes" -> textFiltered
-            else -> textFiltered.filter { it.category.equals(category, ignoreCase = true) }
-        }
-
         when (sort) {
-            JournalSortOption.MOST_RECENT ->
-                categoryFiltered.sortedByDescending { it.timestamp }
-
-            JournalSortOption.NAME_ASC ->
-                categoryFiltered.sortedBy { it.name.lowercase() }
-
-            JournalSortOption.NAME_DESC ->
-                categoryFiltered.sortedByDescending { it.name.lowercase() }
+            JournalSortOption.DATE_DESC -> filtered.sortedByDescending { it.timestamp }
+            JournalSortOption.DATE_ASC -> filtered.sortedBy { it.timestamp }
+            JournalSortOption.NAME_ASC -> filtered.sortedBy { it.name.lowercase() }
+            JournalSortOption.NAME_DESC -> filtered.sortedByDescending { it.name.lowercase() }
         }
     }.stateIn(
         scope = viewModelScope,
@@ -105,10 +98,6 @@ class JournalViewModel(
 
     fun setSortOption(option: JournalSortOption) {
         _sortOption.value = option
-    }
-
-    fun setCategoryFilter(category: String?) {
-        _categoryFilter.value = category
     }
 
     fun deleteDiscovery(discoveryId: Long) {

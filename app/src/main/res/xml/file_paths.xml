@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Chemin pour les fichiers de cache (photos temporaires) -->
-    <cache-path name="camera_photos" path="/" />
-
-    <!-- Chemin pour les fichiers internes (images sauvegardées) -->
-    <files-path name="discoveries" path="discoveries/" />
+<paths>
+    <files-path
+        name="images"
+        path="." />
 </paths>

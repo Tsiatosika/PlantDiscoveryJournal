@@ -3,6 +3,9 @@ package com.example.plantdiscoveryjournal.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -40,6 +43,9 @@ fun AppNavGraph(
     getDetailViewModel: (Long) -> DetailViewModel
 ) {
     val authState by authViewModel.authState.collectAsState()
+
+    // État global pour la taille du texte (Paramètres)
+    var textSize by remember { mutableStateOf("Moyen") } // "Petit", "Moyen", "Grand"
 
     val startDestination = when (authState) {
         is AuthState.Authenticated -> Screen.Journal.route
@@ -96,7 +102,9 @@ fun AppNavGraph(
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                themeViewModel = themeViewModel
+                themeViewModel = themeViewModel,
+                textSize = textSize,
+                onTextSizeChange = { newSize -> textSize = newSize }
             )
         }
 
@@ -130,7 +138,8 @@ fun AppNavGraph(
                 viewModel = viewModel,
                 onNavigateBack = {
                     navController.popBackStack()
-                }
+                },
+                textSize = textSize
             )
         }
     }

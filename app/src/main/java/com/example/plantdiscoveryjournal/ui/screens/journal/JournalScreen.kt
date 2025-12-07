@@ -9,7 +9,29 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +42,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.fontResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,8 +49,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.plantdiscoveryjournal.R
 import com.example.plantdiscoveryjournal.domain.model.Discovery
-import com.example.plantdiscoveryjournal.ui.theme.PrimaryGreen
-import com.example.plantdiscoveryjournal.ui.theme.TextGray
+import com.example.plantdiscoveryjournal.ui.theme.*
 import com.example.plantdiscoveryjournal.ui.viewmodel.JournalSortOption
 import com.example.plantdiscoveryjournal.ui.viewmodel.JournalViewModel
 import com.example.plantdiscoveryjournal.ui.viewmodel.ThemeViewModel
@@ -42,7 +62,9 @@ fun JournalScreen(
     onNavigateToCapture: () -> Unit,
     onNavigateToDetail: (Long) -> Unit,
     onSignOut: () -> Unit,
-    themeViewModel: ThemeViewModel
+    themeViewModel: ThemeViewModel,
+    textSize: String,
+    onTextSizeChange: (String) -> Unit
 ) {
     val discoveries by viewModel.discoveries.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -50,15 +72,16 @@ fun JournalScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchActive by viewModel.isSearchActive.collectAsState()
     val sortOption by viewModel.sortOption.collectAsState()
-    val categoryFilter by viewModel.categoryFilter.collectAsState()
 
     val isDark by themeViewModel.isDarkTheme.collectAsState()
-    val colorScheme = MaterialTheme.colorScheme
 
     var showSignOutDialog by remember { mutableStateOf(false) }
-    var showSortMenu by remember { mutableStateOf(false) }
+    var showSettingsSheet by remember { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true
+    )
 
     LaunchedEffect(isSearchActive) {
         if (isSearchActive) {
@@ -66,7 +89,7 @@ fun JournalScreen(
         }
     }
 
-    Scaffold(
+    androidx.compose.material3.Scaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -79,170 +102,86 @@ fun JournalScreen(
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester),
                             colors = TextFieldDefaults.colors(
-                                focusedContainerColor = colorScheme.surface,
-                                unfocusedContainerColor = colorScheme.surface,
+                                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                                 focusedIndicatorColor = Color.Transparent,
                                 unfocusedIndicatorColor = Color.Transparent,
-                                cursorColor = colorScheme.primary
+                                cursorColor = MaterialTheme.colorScheme.primary
                             ),
                             singleLine = true,
                             leadingIcon = {
                                 Icon(
                                     Icons.Default.Search,
                                     contentDescription = null,
-                                    tint = colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                             }
                         )
                     } else {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = colorScheme.primary.copy(alpha = 0.08f)
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.logo),
-                                    contentDescription = null,
-                                    tint = colorScheme.primary,
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .padding(6.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    text = "Mes",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colorScheme.onSurface,
-                                    maxLines = 1
-                                )
-                                Text(
-                                    text = "découvertes",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1
-                                )
-                            }
-                        }
-                    }
-                },
-                actions = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        IconButton(onClick = { themeViewModel.toggleTheme() }) {
                             Icon(
-                                imageVector = if (isDark) Icons.Default.DarkMode else Icons.Default.LightMode,
-                                contentDescription = "Changer de thème",
-                                tint = colorScheme.primary
+                                painter = painterResource(id = R.drawable.logo),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Text(
+                                text = "Mes Découvertes",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         }
-
-                        if (isSearchActive) {
-                            IconButton(onClick = { viewModel.clearSearch() }) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Fermer la recherche",
-                                    tint = colorScheme.onSurface
-                                )
-                            }
-                        } else {
-                            IconButton(onClick = { viewModel.toggleSearch() }) {
-                                Icon(
-                                    Icons.Default.Search,
-                                    contentDescription = "Rechercher",
-                                    tint = colorScheme.primary
-                                )
-                            }
-
-                            IconButton(onClick = { showSortMenu = true }) {
-                                Icon(
-                                    Icons.Default.Sort,
-                                    contentDescription = "Trier",
-                                    tint = colorScheme.primary
-                                )
-                            }
-
-                            IconButton(onClick = { showSignOutDialog = true }) {
-                                Icon(
-                                    Icons.Default.ExitToApp,
-                                    contentDescription = "Déconnexion",
-                                    tint = TextGray
-                                )
-                            }
-                        }
-                    }
-
-                    DropdownMenu(
-                        expanded = showSortMenu,
-                        onDismissRequest = { showSortMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "Plus récentes",
-                                    fontWeight =
-                                        if (sortOption == JournalSortOption.MOST_RECENT)
-                                            FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            },
-                            onClick = {
-                                viewModel.setSortOption(JournalSortOption.MOST_RECENT)
-                                showSortMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "A → Z",
-                                    fontWeight =
-                                        if (sortOption == JournalSortOption.NAME_ASC)
-                                            FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            },
-                            onClick = {
-                                viewModel.setSortOption(JournalSortOption.NAME_ASC)
-                                showSortMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    "Z → A",
-                                    fontWeight =
-                                        if (sortOption == JournalSortOption.NAME_DESC)
-                                            FontWeight.SemiBold else FontWeight.Normal
-                                )
-                            },
-                            onClick = {
-                                viewModel.setSortOption(JournalSortOption.NAME_DESC)
-                                showSortMenu = false
-                            }
-                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colorScheme.surface,
-                    titleContentColor = colorScheme.onSurface
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
+                actions = {
+                    if (isSearchActive) {
+                        IconButton(onClick = { viewModel.clearSearch() }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Fermer la recherche",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = { viewModel.toggleSearch() }) {
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = "Rechercher",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        IconButton(onClick = { showSettingsSheet = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Paramètres",
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                            )
+                        }
+                        IconButton(onClick = { showSignOutDialog = true }) {
+                            Icon(
+                                Icons.Default.ExitToApp,
+                                contentDescription = "Déconnexion",
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                },
                 modifier = Modifier.shadow(2.dp)
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToCapture,
-                containerColor = PrimaryGreen,
+                containerColor = MaterialTheme.colorScheme.primary,
                 shape = CircleShape,
                 modifier = Modifier
                     .size(64.dp)
@@ -251,12 +190,12 @@ fun JournalScreen(
                 Icon(
                     Icons.Default.Add,
                     contentDescription = "Nouvelle découverte",
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(28.dp)
                 )
             }
         },
-        containerColor = colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -265,9 +204,9 @@ fun JournalScreen(
         ) {
             when {
                 isLoading -> {
-                    CircularProgressIndicator(
+                    androidx.compose.material3.CircularProgressIndicator(
                         modifier = Modifier.align(Alignment.Center),
-                        color = PrimaryGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         strokeWidth = 3.dp
                     )
                 }
@@ -296,51 +235,33 @@ fun JournalScreen(
                                     text = "${discoveries.size} plante${if (discoveries.size > 1) "s" else ""} découverte${if (discoveries.size > 1) "s" else ""}",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = TextGray
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                                 )
-
                                 Surface(
-                                    color = PrimaryGreen.copy(alpha = 0.1f),
+                                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                                     shape = RoundedCornerShape(20.dp)
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                        modifier = Modifier.padding(
+                                            horizontal = 12.dp,
+                                            vertical = 6.dp
+                                        ),
                                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Icon(
                                             painter = painterResource(id = R.drawable.logo),
                                             contentDescription = null,
-                                            tint = PrimaryGreen,
+                                            tint = MaterialTheme.colorScheme.primary,
                                             modifier = Modifier.size(14.dp)
                                         )
                                         Text(
                                             text = "Journal",
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Medium,
-                                            color = PrimaryGreen
+                                            color = MaterialTheme.colorScheme.primary
                                         )
                                     }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            val categories = listOf("Toutes", "Fleur", "Arbre", "Insecte", "Autre")
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                categories.forEach { cat ->
-                                    FilterChip(
-                                        selected = (categoryFilter ?: "Toutes") == cat,
-                                        onClick = { viewModel.setCategoryFilter(cat) },
-                                        label = { Text(cat) }
-                                    )
                                 }
                             }
                         }
@@ -351,11 +272,14 @@ fun JournalScreen(
                         ) { discovery ->
                             DiscoveryCard(
                                 discovery = discovery,
-                                onClick = { onNavigateToDetail(discovery.id) }
+                                onClick = { onNavigateToDetail(discovery.id) },
+                                textSize = textSize
                             )
                         }
 
-                        item { Spacer(modifier = Modifier.height(80.dp)) }
+                        item {
+                            Spacer(modifier = Modifier.height(80.dp))
+                        }
                     }
                 }
             }
@@ -368,11 +292,11 @@ fun JournalScreen(
                     containerColor = MaterialTheme.colorScheme.error,
                     action = {
                         TextButton(onClick = { viewModel.clearError() }) {
-                            Text("OK", color = Color.White)
+                            Text("OK", color = MaterialTheme.colorScheme.onError)
                         }
                     }
                 ) {
-                    Text(errorMessage, color = Color.White)
+                    Text(errorMessage, color = MaterialTheme.colorScheme.onError)
                 }
             }
 
@@ -383,7 +307,7 @@ fun JournalScreen(
                         Icon(
                             painter = painterResource(R.drawable.logo),
                             contentDescription = null,
-                            tint = PrimaryGreen,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(40.dp)
                         )
                     },
@@ -391,14 +315,15 @@ fun JournalScreen(
                         Text(
                             text = "Déconnexion",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
+                            fontSize = 20.sp,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                     },
                     text = {
                         Text(
                             text = "Êtes-vous sûr de vouloir vous déconnecter de votre compte ?",
                             fontSize = 16.sp,
-                            color = TextGray
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     },
                     confirmButton = {
@@ -408,8 +333,8 @@ fun JournalScreen(
                                 onSignOut()
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = PrimaryGreen,
-                                contentColor = Color.White
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
                             ),
                             shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
@@ -436,15 +361,11 @@ fun JournalScreen(
                         }
                     },
                     dismissButton = {
-                        OutlinedButton(
+                        TextButton(
                             onClick = { showSignOutDialog = false },
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = colorScheme.onSurface
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            )
                         ) {
                             Text(
                                 text = "Annuler",
@@ -454,8 +375,163 @@ fun JournalScreen(
                         }
                     },
                     shape = RoundedCornerShape(16.dp),
-                    containerColor = colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.surface
                 )
+            }
+        }
+    }
+
+    if (showSettingsSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showSettingsSheet = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                Text(
+                    text = "Paramètres",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                // Thème
+                Text(
+                    text = "Affichage et thème",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            "Mode sombre",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Activer le thème sombre de l’application",
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                    Switch(
+                        checked = isDark,
+                        onCheckedChange = { themeViewModel.toggleTheme() }
+                    )
+                }
+
+                // Taille du texte
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Taille du texte",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("Petit", "Moyen", "Grand").forEach { size ->
+                            androidx.compose.material3.FilterChip(
+                                selected = textSize == size,
+                                onClick = { onTextSizeChange(size) },
+                                label = { Text(size) }
+                            )
+                        }
+                    }
+                }
+
+                // Tri
+                Text(
+                    text = "Trier par",
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.setSortOption(JournalSortOption.DATE_DESC) },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Date (plus récent d'abord)",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        RadioButton(
+                            selected = sortOption == JournalSortOption.DATE_DESC,
+                            onClick = { viewModel.setSortOption(JournalSortOption.DATE_DESC) }
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.setSortOption(JournalSortOption.DATE_ASC) },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Date (plus ancien d'abord)",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        RadioButton(
+                            selected = sortOption == JournalSortOption.DATE_ASC,
+                            onClick = { viewModel.setSortOption(JournalSortOption.DATE_ASC) }
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.setSortOption(JournalSortOption.NAME_ASC) },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Nom (A → Z)",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        RadioButton(
+                            selected = sortOption == JournalSortOption.NAME_ASC,
+                            onClick = { viewModel.setSortOption(JournalSortOption.NAME_ASC) }
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { viewModel.setSortOption(JournalSortOption.NAME_DESC) },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Nom (Z → A)",
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        RadioButton(
+                            selected = sortOption == JournalSortOption.NAME_DESC,
+                            onClick = { viewModel.setSortOption(JournalSortOption.NAME_DESC) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -464,9 +540,19 @@ fun JournalScreen(
 @Composable
 fun DiscoveryCard(
     discovery: Discovery,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    textSize: String
 ) {
-    val colorScheme = MaterialTheme.colorScheme
+    val titleSize = when (textSize) {
+        "Petit" -> 16.sp
+        "Grand" -> 20.sp
+        else -> 18.sp
+    }
+    val bodySize = when (textSize) {
+        "Petit" -> 12.sp
+        "Grand" -> 14.sp
+        else -> 13.sp
+    }
 
     Card(
         modifier = Modifier
@@ -475,7 +561,9 @@ fun DiscoveryCard(
             .shadow(4.dp, RoundedCornerShape(16.dp)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = colorScheme.surface)
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -490,7 +578,6 @@ fun DiscoveryCard(
                         .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
                     contentScale = ContentScale.Crop
                 )
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -507,7 +594,6 @@ fun DiscoveryCard(
                             )
                         )
                 )
-
                 Surface(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -524,14 +610,14 @@ fun DiscoveryCard(
                         Icon(
                             painter = painterResource(id = R.drawable.logo),
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = BackgroundWhite,
                             modifier = Modifier.size(12.dp)
                         )
                         Text(
                             text = "Identifiée",
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White
+                            color = BackgroundWhite
                         )
                     }
                 }
@@ -545,28 +631,10 @@ fun DiscoveryCard(
             ) {
                 Text(
                     text = discovery.name,
-                    fontSize = 18.sp,
+                    fontSize = titleSize,
                     fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        color = PrimaryGreen.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = discovery.category,
-                            fontSize = 11.sp,
-                            color = PrimaryGreen,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -579,18 +647,16 @@ fun DiscoveryCard(
                     )
                     Text(
                         text = discovery.getFormattedDate(),
-                        fontSize = 13.sp,
-                        color = TextGray,
+                        fontSize = bodySize,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         fontWeight = FontWeight.Medium
                     )
                 }
-
                 Divider(
                     modifier = Modifier.padding(vertical = 4.dp),
-                    color = colorScheme.outline.copy(alpha = 0.2f),
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
                     thickness = 1.dp
                 )
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -598,7 +664,7 @@ fun DiscoveryCard(
                 ) {
                     Text(
                         text = "Voir les détails",
-                        fontSize = 13.sp,
+                        fontSize = bodySize,
                         color = PrimaryGreen,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -616,8 +682,6 @@ fun DiscoveryCard(
 
 @Composable
 fun EmptyStateView(modifier: Modifier = Modifier) {
-    val colorScheme = MaterialTheme.colorScheme
-
     Column(
         modifier = modifier.padding(40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -637,39 +701,56 @@ fun EmptyStateView(modifier: Modifier = Modifier) {
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(24.dp))
-
         Text(
             text = "Aucune découverte",
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground
         )
-
         Spacer(modifier = Modifier.height(12.dp))
-
         Text(
-            text = "Commencez votre aventure botanique en découvrant votre première plante.",
+            text = "Commencez votre aventure botanique\nen découvrant votre première plante",
             fontSize = 15.sp,
-            color = TextGray,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             lineHeight = 22.sp
         )
+        Spacer(modifier = Modifier.height(24.dp))
+        Surface(
+            color = PrimaryGreen.copy(alpha = 0.1f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null,
+                    tint = PrimaryGreen,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "Appuyez sur + pour commencer",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = PrimaryGreen
+                )
+            }
+        }
     }
 }
 
 @Composable
 fun NoResultsView(modifier: Modifier = Modifier) {
-    val colorScheme = MaterialTheme.colorScheme
-
     Column(
         modifier = modifier.padding(40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Surface(
-            color = TextGray.copy(alpha = 0.1f),
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f),
             shape = CircleShape,
             modifier = Modifier.size(100.dp)
         ) {
@@ -678,27 +759,22 @@ fun NoResultsView(modifier: Modifier = Modifier) {
                     Icons.Default.SearchOff,
                     contentDescription = null,
                     modifier = Modifier.size(50.dp),
-                    tint = TextGray
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(20.dp))
-
         Text(
             text = "Aucun résultat",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
-            color = colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground
         )
-
         Spacer(modifier = Modifier.height(10.dp))
-
         Text(
-            text = "Essayez une autre recherche ou découvrez de nouvelles plantes.",
+            text = "Essayez une autre recherche\nou découvrez de nouvelles plantes",
             fontSize = 14.sp,
-            color = TextGray,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             lineHeight = 20.sp
         )
     }
